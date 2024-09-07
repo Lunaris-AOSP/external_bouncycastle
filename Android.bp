@@ -89,6 +89,7 @@ java_library {
     visibility: [
         "//art/build/apex",
         "//art/build/sdk",
+        "//art/tools/ahat",
         "//art/tools/fuzzer",
         "//libcore:__subpackages__",
         "//packages/modules/ArtPrebuilt",
