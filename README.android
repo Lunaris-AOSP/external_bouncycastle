@@ -66,7 +66,8 @@ The following steps are recommended for porting new Bouncy Castle versions.
 
   d) Update the list of exported APIs in proguard.flags, if necessary.
 
-     As of 7 Aug 2024 Proguard is not running in reduce mode, so not needed.
+     Check this in particular if new algorithms are getting registered with
+     ConfigurableProvider.addAlgorithm or ConfigurableProvider.addPrivateAlgorithm.
 
   e) Confirm all changes
 
