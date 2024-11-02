@@ -41,6 +41,7 @@
 
 -keep class com.android.org.bouncycastle.jcajce.provider.symmetric.AES$Mappings { public *; }
 -keep class com.android.org.bouncycastle.jcajce.provider.symmetric.AES$CBC { public *; }
+-keep class com.android.org.bouncycastle.jcajce.provider.symmetric.AES$CFB { public *; }
 -keep class com.android.org.bouncycastle.jcajce.provider.symmetric.AES$ECB { public *; }
 -keep class com.android.org.bouncycastle.jcajce.provider.symmetric.AES$PBEWithAESCBC { public *; }
 -keep class com.android.org.bouncycastle.jcajce.provider.symmetric.AES$PBEWithAESCBC { public *; }
