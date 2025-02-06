@@ -11,6 +11,7 @@ import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.NullDigest;
 // BEGIN Android-removed: Unsupported algorithms
 // import org.bouncycastle.crypto.digests.RIPEMD160Digest;
+// import org.bouncycastle.crypto.digests.SHAKEDigest;
 // END Android-removed: Unsupported algorithms
 import org.bouncycastle.crypto.params.ParametersWithRandom;
 import org.bouncycastle.crypto.signers.DSAEncoding;
@@ -25,7 +26,6 @@ import org.bouncycastle.crypto.signers.StandardDSAEncoding;
 // import org.bouncycastle.crypto.util.DigestFactory;
 import org.bouncycastle.crypto.digests.AndroidDigestFactory;
 import org.bouncycastle.jcajce.provider.asymmetric.util.DSABase;
-import org.bouncycastle.jcajce.provider.asymmetric.util.ECUtil;
 
 public class SignatureSpi
     extends DSABase
@@ -48,7 +48,7 @@ public class SignatureSpi
         PrivateKey privateKey)
         throws InvalidKeyException
     {
-        CipherParameters param = ECUtil.generatePrivateKeyParameter(privateKey);
+        CipherParameters param = ECUtils.generatePrivateKeyParameter(privateKey);
 
         digest.reset();
 
@@ -275,6 +275,26 @@ public class SignatureSpi
         }
     }
 
+    static public class ecDSAShake128
+         extends SignatureSpi
+    {
+        public ecDSAShake128()
+        {
+            // RFC 8702 specifies deterministic DSA
+            super(new SHAKEDigest(128), new ECDSASigner(new HMacDSAKCalculator(new SHAKEDigest(128))), StandardDSAEncoding.INSTANCE);
+        }
+    }
+
+    static public class ecDSAShake256
+        extends SignatureSpi
+    {
+        public ecDSAShake256()
+        {
+            // RFC 8702 specifies deterministic DSA
+            super(new SHAKEDigest(256), new ECDSASigner(new HMacDSAKCalculator(new SHAKEDigest(256))), StandardDSAEncoding.INSTANCE);
+        }
+    }
+
     static public class ecNR
         extends SignatureSpi
     {
@@ -371,6 +391,41 @@ public class SignatureSpi
         public ecPlainDSARP160()
         {
             super(new RIPEMD160Digest(), new ECDSASigner(), PlainDSAEncoding.INSTANCE);
+        }
+    }
+    static public class ecCVCDSA3_224
+        extends SignatureSpi
+    {
+        public ecCVCDSA3_224()
+        {
+            super(DigestFactory.createSHA3_224(), new ECDSASigner(), PlainDSAEncoding.INSTANCE);
+        }
+    }
+
+    static public class ecCVCDSA3_256
+        extends SignatureSpi
+    {
+        public ecCVCDSA3_256()
+        {
+            super(DigestFactory.createSHA3_256(), new ECDSASigner(), PlainDSAEncoding.INSTANCE);
+        }
+    }
+
+    static public class ecCVCDSA3_384
+        extends SignatureSpi
+    {
+        public ecCVCDSA3_384()
+        {
+            super(DigestFactory.createSHA3_384(), new ECDSASigner(), PlainDSAEncoding.INSTANCE);
+        }
+    }
+
+    static public class ecCVCDSA3_512
+        extends SignatureSpi
+    {
+        public ecCVCDSA3_512()
+        {
+            super(DigestFactory.createSHA3_512(), new ECDSASigner(), PlainDSAEncoding.INSTANCE);
         }
     }
     */

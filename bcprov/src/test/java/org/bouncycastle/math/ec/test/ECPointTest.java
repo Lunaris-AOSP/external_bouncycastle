@@ -1,5 +1,5 @@
-package org.bouncycastle.math.ec.test;
 
+package org.bouncycastle.math.ec.test;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -27,9 +26,7 @@ import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.BigIntegers;
 import org.bouncycastle.util.Integers;
 import org.bouncycastle.util.encoders.Hex;
-
 import android.platform.test.annotations.LargeTest;
-
 /**
  * Test class for {@link org.bouncycastle.math.ec.ECPoint ECPoint}. All
  * literature values are taken from "Guide to elliptic curve cryptography",
@@ -42,34 +39,22 @@ public class ECPointTest extends TestCase
      * Random source used to generate random points
      */
     private SecureRandom secRand = new SecureRandom();
-
     private ECPointTest.Fp fp = null;
-
     private ECPointTest.F2m f2m = null;
-
     /**
      * Nested class containing sample literature values for <code>Fp</code>.
      */
     public static class Fp
     {
         private final BigInteger q = new BigInteger("1063");
-
         private final BigInteger a = new BigInteger("4");
-
         private final BigInteger b = new BigInteger("20");
-
         private final BigInteger n = new BigInteger("38");
-
         private final BigInteger h = new BigInteger("1");
-
         private final ECCurve curve = new ECCurve.Fp(q, a, b, n, h);
-
         private final ECPoint infinity = curve.getInfinity();
-
         private final int[] pointSource = { 1, 5, 4, 10, 234, 1024, 817, 912 };
-
         private ECPoint[] p = new ECPoint[pointSource.length / 2];
-
         /**
          * Creates the points on the curve with literature values.
          */
@@ -83,7 +68,6 @@ public class ECPointTest extends TestCase
             }
         }
     }
-
     /**
      * Nested class containing sample literature values for <code>F2m</code>.
      */
@@ -91,28 +75,18 @@ public class ECPointTest extends TestCase
     {
         // Irreducible polynomial for TPB z^4 + z + 1
         private final int m = 4;
-
         private final int k1 = 1;
-
         // a = z^3
         private final BigInteger aTpb = new BigInteger("1000", 2);
-
         // b = z^3 + 1
         private final BigInteger bTpb = new BigInteger("1001", 2);
-
         private final BigInteger n = new BigInteger("23");
-
         private final BigInteger h = new BigInteger("1");
-
         private final ECCurve.F2m curve = new ECCurve.F2m(m, k1, aTpb, bTpb, n, h);
-
         private final ECPoint.F2m infinity = (ECPoint.F2m) curve.getInfinity();
-
         private final String[] pointSource = { "0010", "1111", "1100", "1100",
                 "0001", "0001", "1011", "0010" };
-
         private ECPoint[] p = new ECPoint[pointSource.length / 2];
-
         /**
          * Creates the points on the curve with literature values.
          */
@@ -126,16 +100,13 @@ public class ECPointTest extends TestCase
             }
         }
     }
-
     public void setUp()
     {
         fp = new ECPointTest.Fp();
         fp.createPoints();
-
         f2m = new ECPointTest.F2m();
         f2m.createPoints();
     }
-
     /**
      * Tests, if inconsistent points can be created, i.e. points with exactly
      * one null coordinate (not permitted).
@@ -150,7 +121,6 @@ public class ECPointTest extends TestCase
         catch (IllegalArgumentException expected)
         {
         }
-
         try
         {
             ECPoint bad = fp.curve.createPoint(null, new BigInteger("12"));
@@ -159,7 +129,6 @@ public class ECPointTest extends TestCase
         catch (IllegalArgumentException expected)
         {
         }
-
         try
         {
             ECPoint bad = f2m.curve.createPoint(new BigInteger("1011"), null);
@@ -168,7 +137,6 @@ public class ECPointTest extends TestCase
         catch (IllegalArgumentException expected)
         {
         }
-
         try
         {
             ECPoint bad = f2m.curve.createPoint(null, new BigInteger("1011"));
@@ -178,7 +146,6 @@ public class ECPointTest extends TestCase
         {
         }
     }
-
     /**
      * Tests <code>ECPoint.add()</code> against literature values.
      * 
@@ -197,7 +164,6 @@ public class ECPointTest extends TestCase
             assertPointsEqual("Adding to infinity failed", p[i], infinity.add(p[i]));
         }
     }
-
     /**
      * Calls <code>implTestAdd()</code> for <code>Fp</code> and
      * <code>F2m</code>.
@@ -207,7 +173,6 @@ public class ECPointTest extends TestCase
         implTestAdd(fp.p, fp.infinity);
         implTestAdd(f2m.p, f2m.infinity);
     }
-
     /**
      * Tests <code>ECPoint.twice()</code> against literature values.
      * 
@@ -219,7 +184,6 @@ public class ECPointTest extends TestCase
         assertPointsEqual("Twice incorrect", p[3], p[0].twice());
         assertPointsEqual("Add same point incorrect", p[3], p[0].add(p[0]));
     }
-
     /**
      * Calls <code>implTestTwice()</code> for <code>Fp</code> and
      * <code>F2m</code>.
@@ -229,7 +193,6 @@ public class ECPointTest extends TestCase
         implTestTwice(fp.p);
         implTestTwice(f2m.p);
     }
-
     private void implTestThreeTimes(ECPoint[] p)
     {
         ECPoint P = p[0];
@@ -237,7 +200,6 @@ public class ECPointTest extends TestCase
         assertPointsEqual("ThreeTimes incorrect", _3P, P.threeTimes());
         assertPointsEqual("TwicePlus incorrect", _3P, P.twicePlus(P));
     }
-
     /**
      * Calls <code>implTestThreeTimes()</code> for <code>Fp</code> and
      * <code>F2m</code>.
@@ -247,7 +209,6 @@ public class ECPointTest extends TestCase
         implTestThreeTimes(fp.p);
         implTestThreeTimes(f2m.p);
     }
-
     /**
      * Goes through all points on an elliptic curve and checks, if adding a
      * point <code>k</code>-times is the same as multiplying the point by
@@ -263,7 +224,6 @@ public class ECPointTest extends TestCase
     {
         ECPoint adder = infinity;
         ECPoint multiplier = infinity;
-
         BigInteger i = BigInteger.valueOf(1);
         do
         {
@@ -275,7 +235,6 @@ public class ECPointTest extends TestCase
         }
         while (!(adder.equals(infinity)));
     }
-
     /**
      * Calls <code>implTestAllPoints()</code> for the small literature curves,
      * both for <code>Fp</code> and <code>F2m</code>.
@@ -286,13 +245,11 @@ public class ECPointTest extends TestCase
         {
             implTestAllPoints(fp.p[i], fp.infinity);
         }
-
         for (int i = 0; i < f2m.p.length; i++)
         {
             implTestAllPoints(f2m.p[i], f2m.infinity);
         }
     }
-
     /**
      * Checks, if the point multiplication algorithm of the given point yields
      * the same result as point multiplication done by the reference
@@ -312,7 +269,6 @@ public class ECPointTest extends TestCase
         ECPoint q = p.multiply(k);
         assertPointsEqual("ECPoint.multiply is incorrect", ref, q);
     }
-
     /**
      * Checks, if the point multiplication algorithm of the given point yields
      * the same result as point multiplication done by the reference
@@ -329,7 +285,6 @@ public class ECPointTest extends TestCase
     {
         BigInteger bound = BigInteger.ONE.shiftLeft(numBits);
         BigInteger k = BigInteger.ZERO;
-
         do
         {
             ECPoint ref = ECAlgorithms.referenceMultiply(p, k);
@@ -339,7 +294,6 @@ public class ECPointTest extends TestCase
         }
         while (k.compareTo(bound) < 0);
     }
-
     /**
      * Tests <code>ECPoint.add()</code> and <code>ECPoint.subtract()</code>
      * for the given point and the given point at infinity.
@@ -360,7 +314,6 @@ public class ECPointTest extends TestCase
         assertPointsEqual("infinity plus infinity is not infinity ", infinity, infinity.add(infinity));
         assertPointsEqual("Twice infinity is not infinity ", infinity, infinity.twice());
     }
-
     /**
      * Calls <code>implTestAddSubtract()</code> for literature values, both
      * for <code>Fp</code> and <code>F2m</code>.
@@ -371,21 +324,17 @@ public class ECPointTest extends TestCase
         for (int iFp = 0; iFp < fp.pointSource.length / 2; iFp++)
         {
             implTestAddSubtract(fp.p[iFp], fp.infinity);
-
             implTestMultiplyAll(fp.p[iFp], fpBits);
             implTestMultiplyAll(fp.infinity, fpBits);
         }
-
         int f2mBits = f2m.curve.getOrder().bitLength();
         for (int iF2m = 0; iF2m < f2m.pointSource.length / 2; iF2m++)
         {
             implTestAddSubtract(f2m.p[iF2m], f2m.infinity);
-
             implTestMultiplyAll(f2m.p[iF2m], f2mBits);
             implTestMultiplyAll(f2m.infinity, f2mBits);
         }
     }
-
     /**
      * Test encoding with and without point compression.
      * 
@@ -398,25 +347,20 @@ public class ECPointTest extends TestCase
         byte[] unCompBarr = p.getEncoded(false);
         ECPoint decUnComp = p.getCurve().decodePoint(unCompBarr);
         assertPointsEqual("Error decoding uncompressed point", p, decUnComp);
-
         // Point compression
         byte[] compBarr = p.getEncoded(true);
         ECPoint decComp = p.getCurve().decodePoint(compBarr);
         assertPointsEqual("Error decoding compressed point", p, decComp);
     }
-
     private void implAddSubtractMultiplyTwiceEncodingTest(ECCurve curve, ECPoint q, BigInteger n)
     {
         // Get point at infinity on the curve
         ECPoint infinity = curve.getInfinity();
-
         implTestAddSubtract(q, infinity);
         implTestMultiply(q, n.bitLength());
         implTestMultiply(infinity, n.bitLength());
-
         int logSize = 32 - Integers.numberOfLeadingZeros(curve.getFieldSize() - 1);
         int rounds = Math.max(2, Math.min(10, 32 - 3 * logSize));
-
         ECPoint p = q;
         for (int i = 0; i < rounds; ++i)
         {
@@ -424,7 +368,6 @@ public class ECPointTest extends TestCase
             p = p.twice();
         }
     }
-
     private void implSqrtTest(ECCurve c)
     {
         if (ECAlgorithms.isFpCurve(c))
@@ -432,19 +375,15 @@ public class ECPointTest extends TestCase
             BigInteger p = c.getField().getCharacteristic();
             BigInteger pMinusOne = p.subtract(ECConstants.ONE);
             BigInteger legendreExponent = p.shiftRight(1);
-
             ECFieldElement zero = c.fromBigInteger(BigInteger.ZERO);
             assertEquals(zero, zero.sqrt());
-
             ECFieldElement one = c.fromBigInteger(BigInteger.ONE);
             assertEquals(one, one.sqrt());
-
             for (int i = 0; i < 20; ++i)
             {
                 BigInteger x = BigIntegers.createRandomInRange(ECConstants.TWO, pMinusOne, secRand);
                 ECFieldElement fe = c.fromBigInteger(x);
                 ECFieldElement root = fe.sqrt();
-
                 if (root == null)
                 {
                     assertEquals(pMinusOne, x.modPow(legendreExponent, p));
@@ -469,11 +408,9 @@ public class ECPointTest extends TestCase
             }
         }
     }
-
     private void implValidityTest(ECCurve c, ECPoint g)
     {
         assertTrue(g.isValid());
-
         if (ECAlgorithms.isF2mCurve(c))
         {
             BigInteger h = c.getCofactor();
@@ -489,7 +426,6 @@ public class ECPointTest extends TestCase
                     assertFalse(bad2.isValid());
                     ECPoint good2 = bad2.add(order2);
                     assertTrue(good2.isValid());
-
                     if (!h.testBit(1))
                     {
                         ECFieldElement L = solveQuadraticEquation(c, c.getA());
@@ -513,13 +449,11 @@ public class ECPointTest extends TestCase
             }
         }
     }
-
     private void implAddSubtractMultiplyTwiceEncodingTestAllCoords(X9ECParameters x9ECParameters)
     {
         BigInteger n = x9ECParameters.getN();
         ECPoint G = x9ECParameters.getG();
         ECCurve C = x9ECParameters.getCurve();
-
         int[] coords = ECCurve.getAllCoordinateSystems();
         for (int i = 0; i < coords.length; ++i)
         {
@@ -528,26 +462,20 @@ public class ECPointTest extends TestCase
             {
                 ECCurve c = C;
                 ECPoint g = G;
-
                 if (c.getCoordinateSystem() != coord)
                 {
                     c = C.configure().setCoordinateSystem(coord).create();
                     g = c.importPoint(G);
                 }
-
                 // The generator is multiplied by random b to get random q
                 BigInteger b = new BigInteger(n.bitLength(), secRand);
                 ECPoint q = g.multiply(b).normalize();
-
                 implAddSubtractMultiplyTwiceEncodingTest(c, q, n);
-
                 implSqrtTest(c);
-
                 implValidityTest(c, g);
             }
         }
     }
-
     /**
      * Calls <code>implTestAddSubtract()</code>,
      * <code>implTestMultiply</code> and <code>implTestEncoding</code> for
@@ -558,15 +486,12 @@ public class ECPointTest extends TestCase
     {
         Set names = new HashSet(enumToList(ECNamedCurveTable.getNames()));
         names.addAll(enumToList(CustomNamedCurves.getNames()));
-
         Iterator it = names.iterator();
         while (it.hasNext())
         {
             String name = (String)it.next();
-
             X9ECParameters x9A = ECNamedCurveTable.getByName(name);
             X9ECParameters x9B = CustomNamedCurves.getByName(name);
-
             if (x9A != null && x9B != null)
             {
                 assertEquals(x9A.getCurve().getField(), x9B.getCurve().getField());
@@ -574,31 +499,25 @@ public class ECPointTest extends TestCase
                 assertEquals(x9A.getCurve().getB().toBigInteger(), x9B.getCurve().getB().toBigInteger());
                 assertOptionalValuesAgree(x9A.getCurve().getCofactor(), x9B.getCurve().getCofactor());
                 assertOptionalValuesAgree(x9A.getCurve().getOrder(), x9B.getCurve().getOrder());
-
                 assertPointsEqual("Custom curve base-point inconsistency", x9A.getG(), x9B.getG());
-
                 assertEquals(x9A.getH(), x9B.getH());
                 assertEquals(x9A.getN(), x9B.getN());
                 assertOptionalValuesAgree(x9A.getSeed(), x9B.getSeed());
-
                 BigInteger k = new BigInteger(x9A.getN().bitLength(), secRand);
                 ECPoint pA = x9A.getG().multiply(k);
                 ECPoint pB = x9B.getG().multiply(k);
                 assertPointsEqual("Custom curve multiplication inconsistency", pA, pB);
             }
-
             if (x9A != null)
             {
                 implAddSubtractMultiplyTwiceEncodingTestAllCoords(x9A);
             }
-
             if (x9B != null)
             {
                 implAddSubtractMultiplyTwiceEncodingTestAllCoords(x9B);
             }
         }
     }
-
     public void testExampleFpB0() throws Exception
     {
         /*
@@ -619,9 +538,7 @@ public class ECPointTest extends TestCase
         byte[] S = null;
         BigInteger n = p.add(BigInteger.valueOf(1)).shiftRight(2);
         BigInteger h = BigInteger.valueOf(4);
-
         ECCurve curve = configureCurve(new ECCurve.Fp(p, a, b, n, h));
-
         X9ECPoint G = configureBasepoint(curve, "04"
             // Px
             + "53FC09EE332C29AD0A7990053ED9B52A"
@@ -641,19 +558,15 @@ public class ECPointTest extends TestCase
             + "AC6F1E80164AA989492D979FC5A4D5F2"
             + "13515AD7E9CB99A980BDAD5AD5BB4636"
             + "ADB9B5706A67DCDE75573FD71BEF16D7");
-
         X9ECParameters x9 = new X9ECParameters(curve, G, n, h, S);
-
         implAddSubtractMultiplyTwiceEncodingTestAllCoords(x9);
     }
-
     private void assertPointsEqual(String message, ECPoint a, ECPoint b)
     {
         // NOTE: We intentionally test points for equality in both directions
         assertEquals(message, a, b);
         assertEquals(message, b, a);
     }
-
     private void assertOptionalValuesAgree(Object a, Object b)
     {
         if (a != null && b != null)
@@ -661,7 +574,6 @@ public class ECPointTest extends TestCase
             assertEquals(a, b);
         }
     }
-
     private void assertOptionalValuesAgree(byte[] a, byte[] b)
     {
         if (a != null && b != null)
@@ -669,46 +581,37 @@ public class ECPointTest extends TestCase
             assertTrue(Arrays.areEqual(a, b));
         }
     }
-
     private static X9ECPoint configureBasepoint(ECCurve curve, String encoding)
     {
         X9ECPoint G = new X9ECPoint(curve, Hex.decode(encoding));
         WNafUtil.configureBasepoint(G.getPoint());
         return G;
     }
-
     private static ECCurve configureCurve(ECCurve curve)
     {
         return curve;
     }
-
     private List enumToList(Enumeration en)
     {
         List rv = new ArrayList();
-
         while (en.hasMoreElements())
         {
             rv.add(en.nextElement());
         }
-
         return rv;
     }
-
     private static BigInteger fromHex(
         String hex)
     {
         return new BigInteger(1, Hex.decode(hex));
     }
-
     private static ECFieldElement solveQuadraticEquation(ECCurve c, ECFieldElement rhs)
     {
         if (rhs.isZero())
         {
             return rhs;
         }
-
         ECFieldElement gamma, z, zeroElement = c.fromBigInteger(ECConstants.ZERO);
-
         int m = c.getFieldSize();
         Random rand = new Random();
         do
@@ -729,12 +632,11 @@ public class ECPointTest extends TestCase
             gamma = z.square().add(z);
         }
         while (gamma.isZero());
-
         return z;
     }
-
     public static Test suite()
     {
         return new TestSuite(ECPointTest.class);
     }
 }
+

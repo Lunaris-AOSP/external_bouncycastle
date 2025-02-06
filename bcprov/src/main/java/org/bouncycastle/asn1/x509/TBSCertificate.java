@@ -1,18 +1,15 @@
 package org.bouncycastle.asn1.x509;
 
-import java.math.BigInteger;
-
+import org.bouncycastle.asn1.ASN1BitString;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1TaggedObject;
-import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERTaggedObject;
 import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.util.BigIntegers;
 import org.bouncycastle.util.Properties;
 
 /**
@@ -47,8 +44,8 @@ public class TBSCertificate
     Time                    startDate, endDate;
     X500Name                subject;
     SubjectPublicKeyInfo    subjectPublicKeyInfo;
-    DERBitString            issuerUniqueId;
-    DERBitString            subjectUniqueId;
+    ASN1BitString           issuerUniqueId;
+    ASN1BitString           subjectUniqueId;
     Extensions              extensions;
 
     public static TBSCertificate getInstance(
@@ -96,15 +93,15 @@ public class TBSCertificate
         boolean isV1 = false;
         boolean isV2 = false;
  
-        if (version.hasValue(BigInteger.valueOf(0)))
+        if (version.hasValue(0))
         {
             isV1 = true;
         }
-        else if (version.hasValue(BigInteger.valueOf(1)))
+        else if (version.hasValue(1))
         {
             isV2 = true;
         }
-        else if (!version.hasValue(BigInteger.valueOf(2)))
+        else if (!version.hasValue(2))
         {
             throw new IllegalArgumentException("version number not recognised");
         }
@@ -142,10 +139,10 @@ public class TBSCertificate
             switch (extra.getTagNo())
             {
             case 1:
-                issuerUniqueId = DERBitString.getInstance(extra, false);
+                issuerUniqueId = ASN1BitString.getInstance(extra, false);
                 break;
             case 2:
-                subjectUniqueId = DERBitString.getInstance(extra, false);
+                subjectUniqueId = ASN1BitString.getInstance(extra, false);
                 break;
             case 3:
                 if (isV2)
@@ -206,12 +203,12 @@ public class TBSCertificate
         return subjectPublicKeyInfo;
     }
 
-    public DERBitString getIssuerUniqueId()
+    public ASN1BitString getIssuerUniqueId()
     {
         return issuerUniqueId;
     }
 
-    public DERBitString getSubjectUniqueId()
+    public ASN1BitString getSubjectUniqueId()
     {
         return subjectUniqueId;
     }
@@ -238,7 +235,7 @@ public class TBSCertificate
         ASN1EncodableVector v = new ASN1EncodableVector();
 
         // DEFAULT Zero
-        if (!version.hasValue(BigIntegers.ZERO))
+        if (!version.hasValue(0))
         {
             v.add(new DERTaggedObject(true, 0, version));
         }

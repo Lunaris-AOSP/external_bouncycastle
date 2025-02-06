@@ -1,56 +1,21 @@
 package org.bouncycastle.jcajce.provider.asymmetric.x509;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.Principal;
-import java.security.Provider;
 import java.security.PublicKey;
-import java.security.Signature;
-import java.security.SignatureException;
 import java.security.cert.CertificateEncodingException;
-import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.CertificateParsingException;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 import javax.security.auth.x500.X500Principal;
 
 import org.bouncycastle.asn1.ASN1BitString;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Encoding;
-import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.bouncycastle.asn1.ASN1OutputStream;
 import org.bouncycastle.asn1.ASN1Primitive;
-import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.ASN1String;
-import org.bouncycastle.asn1.DERBitString;
-import org.bouncycastle.asn1.DERIA5String;
-import org.bouncycastle.asn1.DERNull;
-import org.bouncycastle.asn1.DEROctetString;
-import org.bouncycastle.asn1.misc.MiscObjectIdentifiers;
-import org.bouncycastle.asn1.misc.NetscapeCertType;
-import org.bouncycastle.asn1.misc.NetscapeRevocationURL;
-import org.bouncycastle.asn1.misc.VerisignCzagExtension;
-import org.bouncycastle.asn1.util.ASN1Dump;
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x500.style.RFC4519Style;
-import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.Extensions;
@@ -61,12 +26,8 @@ import org.bouncycastle.asn1.x509.X509Name;
 // END Android-added: Unknown reason
 import org.bouncycastle.jcajce.provider.asymmetric.util.PKCS12BagAttributeCarrierImpl;
 import org.bouncycastle.jcajce.util.JcaJceHelper;
-import org.bouncycastle.jce.X509Principal;
 import org.bouncycastle.jce.interfaces.PKCS12BagAttributeCarrier;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.util.Integers;
-import org.bouncycastle.util.Strings;
-import org.bouncycastle.util.encoders.Hex;
+import org.bouncycastle.util.Arrays;
 
 class X509CertificateObject
     extends X509CertificateImpl
@@ -253,6 +214,8 @@ class X509CertificateObject
                     return false;
                 }
             }
+
+            return getInternalCertificate().equals(otherBC.getInternalCertificate());
         }
 
         return getInternalCertificate().equals(other);
@@ -317,18 +280,19 @@ class X509CertificateObject
             }
         }
 
-        byte[] encoding;
+        byte[] encoding = null;
+        CertificateEncodingException exception = null;
         try
         {
-            encoding = getEncoded();
+            encoding = c.getEncoded(ASN1Encoding.DER);
         }
-        catch (CertificateEncodingException e)
+        catch (IOException e)
         {
-            encoding = null;
+            exception = new X509CertificateEncodingException(e);
         }
 
         X509CertificateInternal temp = new X509CertificateInternal(bcHelper, c, basicConstraints, keyUsage, sigAlgName,
-            sigAlgParams, encoding);
+            sigAlgParams, encoding, exception);
 
         synchronized (cacheLock)
         {
@@ -370,7 +334,7 @@ class X509CertificateObject
                 return null;
             }
 
-            ASN1BitString bits = DERBitString.getInstance(ASN1Primitive.fromByteArray(extOctets));
+            ASN1BitString bits = ASN1BitString.getInstance(ASN1Primitive.fromByteArray(extOctets));
 
             byte[] bytes = bits.getBytes();
             int length = (bytes.length * 8) - bits.getPadBits();
@@ -417,6 +381,22 @@ class X509CertificateObject
         catch (Exception e)
         {
             throw new CertificateParsingException("cannot construct SigAlgParams: " + e);
+        }
+    }
+
+    private static class X509CertificateEncodingException
+        extends CertificateEncodingException
+    {
+        private final Throwable cause;
+
+        X509CertificateEncodingException(Throwable cause)
+        {
+            this.cause = cause;
+        }
+
+        public Throwable getCause()
+        {
+            return cause;
         }
     }
 }
