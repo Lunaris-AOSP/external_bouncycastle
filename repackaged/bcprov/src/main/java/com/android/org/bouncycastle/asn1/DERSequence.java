@@ -18,7 +18,7 @@ public class DERSequence
         return (DERSequence)seq.toDERObject();
     }
 
-    private int contentsLength = -1;
+    private int bodyLength = -1;
 
     /**
      * Create an empty sequence
@@ -61,9 +61,9 @@ public class DERSequence
         super(elements, clone);
     }
 
-    private int getContentsLength() throws IOException
+    private int getBodyLength() throws IOException
     {
-        if (contentsLength < 0)
+        if (bodyLength < 0)
         {
             int count = elements.length;
             int totalLength = 0;
@@ -71,18 +71,20 @@ public class DERSequence
             for (int i = 0; i < count; ++i)
             {
                 ASN1Primitive derObject = elements[i].toASN1Primitive().toDERObject();
-                totalLength += derObject.encodedLength(true);
+                totalLength += derObject.encodedLength();
             }
 
-            this.contentsLength = totalLength;
+            this.bodyLength = totalLength;
         }
 
-        return contentsLength;
+        return bodyLength;
     }
 
-    int encodedLength(boolean withTag) throws IOException
+    int encodedLength() throws IOException
     {
-        return ASN1OutputStream.getLengthOfEncodingDL(withTag, getContentsLength());
+        int length = getBodyLength();
+
+        return 1 + StreamUtil.calculateBodyLength(length) + length;
     }
 
     /*
@@ -95,14 +97,17 @@ public class DERSequence
      */
     void encode(ASN1OutputStream out, boolean withTag) throws IOException
     {
-        out.writeIdentifier(withTag, BERTags.CONSTRUCTED | BERTags.SEQUENCE);
+        if (withTag)
+        {
+            out.write(BERTags.SEQUENCE | BERTags.CONSTRUCTED);
+        }
 
         DEROutputStream derOut = out.getDERSubStream();
 
         int count = elements.length;
-        if (contentsLength >= 0 || count > 16)
+        if (bodyLength >= 0 || count > 16)
         {
-            out.writeDL(getContentsLength());
+            out.writeLength(getBodyLength());
 
             for (int i = 0; i < count; ++i)
             {
@@ -119,38 +124,17 @@ public class DERSequence
             {
                 ASN1Primitive derObject = elements[i].toASN1Primitive().toDERObject();
                 derObjects[i] = derObject;
-                totalLength += derObject.encodedLength(true);
+                totalLength += derObject.encodedLength();
             }
 
-            this.contentsLength = totalLength;
-            out.writeDL(totalLength);
+            this.bodyLength = totalLength;
+            out.writeLength(totalLength);
 
             for (int i = 0; i < count; ++i)
             {
                 derObjects[i].encode(derOut, true);
             }
         }
-    }
-
-    ASN1BitString toASN1BitString()
-    {
-        return new DERBitString(BERBitString.flattenBitStrings(getConstructedBitStrings()), false);
-    }
-
-    ASN1External toASN1External()
-    {
-        return new DERExternal(this);
-    }
-
-    ASN1OctetString toASN1OctetString()
-    {
-        return new DEROctetString(BEROctetString.flattenOctetStrings(getConstructedOctetStrings()));
-    }
-
-    ASN1Set toASN1Set()
-    {
-        // NOTE: DLSet is intentional, we don't want sorting
-        return new DLSet(false, toArrayInternal());
     }
 
     ASN1Primitive toDERObject()

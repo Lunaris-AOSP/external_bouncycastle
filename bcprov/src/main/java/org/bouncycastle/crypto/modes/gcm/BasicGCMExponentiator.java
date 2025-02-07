@@ -1,5 +1,7 @@
 package org.bouncycastle.crypto.modes.gcm;
 
+import org.bouncycastle.util.Arrays;
+
 public class BasicGCMExponentiator
     implements GCMExponentiator
 {
@@ -17,9 +19,7 @@ public class BasicGCMExponentiator
 
         if (pow > 0)
         {
-            long[] powX = new long[GCMUtil.SIZE_LONGS];
-            GCMUtil.copy(x, powX);
-
+            long[] powX = Arrays.clone(x);
             do
             {
                 if ((pow & 1L) != 0)

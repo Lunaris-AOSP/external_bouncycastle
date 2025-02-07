@@ -4,7 +4,6 @@ package com.android.internal.org.bouncycastle.asn1.x509;
 import java.io.IOException;
 import java.util.Enumeration;
 
-import com.android.internal.org.bouncycastle.asn1.ASN1BitString;
 import com.android.internal.org.bouncycastle.asn1.ASN1Encodable;
 import com.android.internal.org.bouncycastle.asn1.ASN1EncodableVector;
 import com.android.internal.org.bouncycastle.asn1.ASN1Object;
@@ -25,7 +24,7 @@ public class SubjectPublicKeyInfo
     extends ASN1Object
 {
     private AlgorithmIdentifier     algId;
-    private ASN1BitString           keyData;
+    private DERBitString            keyData;
 
     public static SubjectPublicKeyInfo getInstance(
         ASN1TaggedObject obj,
@@ -47,14 +46,6 @@ public class SubjectPublicKeyInfo
         }
 
         return null;
-    }
-
-    public SubjectPublicKeyInfo(
-        AlgorithmIdentifier algId,
-        ASN1BitString publicKey)
-    {
-        this.keyData = publicKey;
-        this.algId = algId;
     }
 
     public SubjectPublicKeyInfo(
@@ -86,10 +77,10 @@ public class SubjectPublicKeyInfo
                     + seq.size());
         }
 
-        Enumeration e = seq.getObjects();
+        Enumeration         e = seq.getObjects();
 
         this.algId = AlgorithmIdentifier.getInstance(e.nextElement());
-        this.keyData = ASN1BitString.getInstance(e.nextElement());
+        this.keyData = DERBitString.getInstance(e.nextElement());
     }
 
     public AlgorithmIdentifier getAlgorithm()
@@ -140,7 +131,7 @@ public class SubjectPublicKeyInfo
      *
      * @return the public key as the raw bit string...
      */
-    public ASN1BitString getPublicKeyData()
+    public DERBitString getPublicKeyData()
     {
         return keyData;
     }

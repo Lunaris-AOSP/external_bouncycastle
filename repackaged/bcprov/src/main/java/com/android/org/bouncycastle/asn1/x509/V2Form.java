@@ -71,7 +71,10 @@ public class V2Form
         this.objectDigestInfo = objectDigestInfo;
     }
 
-    private V2Form(
+    /**
+     * @deprecated use getInstance().
+     */
+    public V2Form(
         ASN1Sequence seq)
     {
         if (seq.size() > 3)

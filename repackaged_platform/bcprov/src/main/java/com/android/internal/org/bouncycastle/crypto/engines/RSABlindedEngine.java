@@ -112,31 +112,39 @@ public class RSABlindedEngine
         }
 
         BigInteger input = core.convertInput(in, inOff, inLen);
-        BigInteger result = processInput(input);
-        return core.convertOutput(result);
-    }
 
-    private BigInteger processInput(BigInteger input)
-    {
+        BigInteger result;
         if (key instanceof RSAPrivateCrtKeyParameters)
         {
-            RSAPrivateCrtKeyParameters crtKey = (RSAPrivateCrtKeyParameters)key;
+            RSAPrivateCrtKeyParameters k = (RSAPrivateCrtKeyParameters)key;
 
-            BigInteger e = crtKey.getPublicExponent();
+            BigInteger e = k.getPublicExponent();
             if (e != null)   // can't do blinding without a public exponent
             {
-                BigInteger m = crtKey.getModulus();
-
+                BigInteger m = k.getModulus();
                 BigInteger r = BigIntegers.createRandomInRange(ONE, m.subtract(ONE), random);
-                BigInteger blind = r.modPow(e, m);
-                BigInteger unblind = BigIntegers.modOddInverse(m, r);
 
-                BigInteger blindedInput = blind.multiply(input).mod(m);
+                BigInteger blindedInput = r.modPow(e, m).multiply(input).mod(m);
                 BigInteger blindedResult = core.processBlock(blindedInput);
-                return unblind.multiply(blindedResult).mod(m);
+
+                BigInteger rInv = BigIntegers.modOddInverse(m, r);
+                result = blindedResult.multiply(rInv).mod(m);
+                // defence against Arjen Lenstra’s CRT attack
+                if (!input.equals(result.modPow(e, m)))
+                {
+                    throw new IllegalStateException("RSA engine faulty decryption/signing detected");
+                }
+            }
+            else
+            {
+                result = core.processBlock(input);
             }
         }
+        else
+        {
+            result = core.processBlock(input);
+        }
 
-        return core.processBlock(input);
+        return core.convertOutput(result);
     }
 }

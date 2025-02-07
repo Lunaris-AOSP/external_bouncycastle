@@ -2,11 +2,9 @@ package org.bouncycastle.asn1.ocsp;
 
 import org.bouncycastle.asn1.ASN1Choice;
 import org.bouncycastle.asn1.ASN1Encodable;
-import org.bouncycastle.asn1.ASN1Null;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1TaggedObject;
-import org.bouncycastle.asn1.ASN1Util;
 import org.bouncycastle.asn1.DERNull;
 import org.bouncycastle.asn1.DERTaggedObject;
 
@@ -44,25 +42,22 @@ public class CertStatus
     private CertStatus(
         ASN1TaggedObject    choice)
     {
-        int tagNo = choice.getTagNo();
+        this.tagNo = choice.getTagNo();
 
-        switch (tagNo)
+        switch (choice.getTagNo())
         {
         case 0:
-            value = ASN1Null.getInstance(choice, false);
+            value = DERNull.INSTANCE;
             break;
         case 1:
             value = RevokedInfo.getInstance(choice, false);
             break;
         case 2:
-            // UnknownInfo ::= NULL
-            value = ASN1Null.getInstance(choice, false);
+            value = DERNull.INSTANCE;
             break;
         default:
-            throw new IllegalArgumentException("Unknown tag encountered: " + ASN1Util.getTagText(choice));
+            throw new IllegalArgumentException("Unknown tag encountered: " + choice.getTagNo());
         }
-
-        this.tagNo = tagNo;
     }
 
     public static CertStatus getInstance(
@@ -84,7 +79,7 @@ public class CertStatus
         ASN1TaggedObject obj,
         boolean          explicit)
     {
-        return getInstance(obj.getExplicitBaseTagged()); // must be explicitly tagged
+        return getInstance(obj.getObject()); // must be explicitly tagged
     }
     
     public int getTagNo()

@@ -38,16 +38,16 @@ public interface BlockCipher
      * Process one block of input from the array in and write it to
      * the out array.
      *
-     * @param input the array containing the input data.
+     * @param in the array containing the input data.
      * @param inOff offset into the in array the data starts at.
-     * @param output the array the output data will be copied into.
+     * @param out the array the output data will be copied into.
      * @param outOff the offset into the out array the output will start at.
-     * @exception DataLengthException if there isn't enough data in input , or
+     * @exception DataLengthException if there isn't enough data in in, or
      * space in out.
      * @exception IllegalStateException if the cipher isn't initialised.
      * @return the number of bytes processed and produced.
      */
-    public int processBlock(byte[] input, int inOff, byte[] output, int outOff)
+    public int processBlock(byte[] in, int inOff, byte[] out, int outOff)
         throws DataLengthException, IllegalStateException;
 
     /**

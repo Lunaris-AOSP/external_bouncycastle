@@ -13,12 +13,11 @@ import com.android.internal.org.bouncycastle.asn1.ASN1Primitive;
 import com.android.internal.org.bouncycastle.asn1.ASN1Sequence;
 import com.android.internal.org.bouncycastle.asn1.ASN1Set;
 import com.android.internal.org.bouncycastle.asn1.ASN1TaggedObject;
-import com.android.internal.org.bouncycastle.asn1.BERTags;
 import com.android.internal.org.bouncycastle.asn1.DERNull;
 // Android-removed: Unsupported algorithms
 // import org.bouncycastle.asn1.cms.OtherRevocationInfoFormat;
 // import org.bouncycastle.asn1.cryptopro.CryptoProObjectIdentifiers;
-// import org.bouncycastle.asn1.eac.EACObjectIdentifiers;
+import com.android.internal.org.bouncycastle.asn1.eac.EACObjectIdentifiers;
 import com.android.internal.org.bouncycastle.asn1.nist.NISTObjectIdentifiers;
 import com.android.internal.org.bouncycastle.asn1.oiw.OIWObjectIdentifiers;
 import com.android.internal.org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
@@ -33,7 +32,6 @@ import com.android.internal.org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
 import com.android.internal.org.bouncycastle.cert.X509AttributeCertificateHolder;
 import com.android.internal.org.bouncycastle.cert.X509CRLHolder;
 import com.android.internal.org.bouncycastle.cert.X509CertificateHolder;
-import com.android.internal.org.bouncycastle.operator.DigestAlgorithmIdentifierFinder;
 import com.android.internal.org.bouncycastle.util.CollectionStore;
 import com.android.internal.org.bouncycastle.util.Store;
 
@@ -102,6 +100,9 @@ class CMSSignedHelper
         addEntries(NISTObjectIdentifiers.id_ecdsa_with_sha3_256,  "ECDSA");
         addEntries(NISTObjectIdentifiers.id_ecdsa_with_sha3_384, "ECDSA");
         addEntries(NISTObjectIdentifiers.id_ecdsa_with_sha3_512,  "ECDSA");
+        */
+        // END Android-removed: Unsupported algorithms
+        addEntries(X9ObjectIdentifiers.id_dsa_with_sha1,  "DSA");
         addEntries(EACObjectIdentifiers.id_TA_ECDSA_SHA_1,  "ECDSA");
         addEntries(EACObjectIdentifiers.id_TA_ECDSA_SHA_224,  "ECDSA");
         addEntries(EACObjectIdentifiers.id_TA_ECDSA_SHA_256,  "ECDSA");
@@ -111,9 +112,6 @@ class CMSSignedHelper
         addEntries(EACObjectIdentifiers.id_TA_RSA_v1_5_SHA_256, "RSA");
         addEntries(EACObjectIdentifiers.id_TA_RSA_PSS_SHA_1,  "RSAandMGF1");
         addEntries(EACObjectIdentifiers.id_TA_RSA_PSS_SHA_256, "RSAandMGF1");
-        */
-        // END Android-removed: Unsupported algorithms
-        addEntries(X9ObjectIdentifiers.id_dsa_with_sha1,  "DSA");
 
         addEntries(X9ObjectIdentifiers.id_dsa, "DSA");
         addEntries(PKCSObjectIdentifiers.rsaEncryption, "RSA");
@@ -155,17 +153,14 @@ class CMSSignedHelper
         return encryptionAlgOID;
     }
 
-    AlgorithmIdentifier fixDigestAlgID(AlgorithmIdentifier algId, DigestAlgorithmIdentifierFinder dgstAlgFinder)
+    AlgorithmIdentifier fixAlgID(AlgorithmIdentifier algId)
     {
-        ASN1Encodable params = algId.getParameters();
-        if (params == null || DERNull.INSTANCE.equals(params))
+        if (algId.getParameters() == null)
         {
-            return dgstAlgFinder.find(algId.getAlgorithm());
+            return new AlgorithmIdentifier(algId.getAlgorithm(), DERNull.INSTANCE);
         }
-        else
-        {
-            return algId;
-        }
+
+        return algId;
     }
 
     void setSigningEncryptionAlgorithmMapping(ASN1ObjectIdentifier oid, String algorithmName)
@@ -207,18 +202,7 @@ class CMSSignedHelper
 
                 if (obj instanceof ASN1TaggedObject)
                 {
-                    ASN1TaggedObject tObj = (ASN1TaggedObject)obj;
-
-                    // CertificateChoices ::= CHOICE {
-                    //     certificate Certificate,
-                    //     extendedCertificate [0] IMPLICIT ExtendedCertificate,  -- Obsolete
-                    //     v1AttrCert [1] IMPLICIT AttributeCertificateV1,        -- Obsolete
-                    //     v2AttrCert [2] IMPLICIT AttributeCertificateV2,
-                    //     other [3] IMPLICIT OtherCertificateFormat }
-                    if (tObj.getTagNo() == 1 || tObj.getTagNo() == 2)
-                    {
-                        certList.add(new X509AttributeCertificateHolder(AttributeCertificate.getInstance(tObj.getBaseUniversal(false, BERTags.SEQUENCE))));
-                    }
+                    certList.add(new X509AttributeCertificateHolder(AttributeCertificate.getInstance(((ASN1TaggedObject)obj).getObject())));
                 }
             }
 
@@ -266,7 +250,7 @@ class CMSSignedHelper
                 {
                     ASN1TaggedObject tObj = ASN1TaggedObject.getInstance(obj);
 
-                    if (tObj.hasContextTag(1))
+                    if (tObj.getTagNo() == 1)
                     {
                         OtherRevocationInfoFormat other = OtherRevocationInfoFormat.getInstance(tObj, false);
 

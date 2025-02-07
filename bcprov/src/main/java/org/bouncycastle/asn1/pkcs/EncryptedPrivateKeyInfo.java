@@ -10,7 +10,6 @@ import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
-import org.bouncycastle.util.Arrays;
 
 public class EncryptedPrivateKeyInfo
     extends ASN1Object
@@ -32,7 +31,7 @@ public class EncryptedPrivateKeyInfo
         byte[]              encoding)
     {
         this.algId = algId;
-        this.data = new DEROctetString(Arrays.clone(encoding));
+        this.data = new DEROctetString(encoding);
     }
 
     public static EncryptedPrivateKeyInfo getInstance(
@@ -57,7 +56,7 @@ public class EncryptedPrivateKeyInfo
 
     public byte[] getEncryptedData()
     {
-        return Arrays.clone(data.getOctets());
+        return data.getOctets();
     }
 
     /**

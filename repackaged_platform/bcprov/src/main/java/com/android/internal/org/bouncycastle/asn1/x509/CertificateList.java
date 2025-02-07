@@ -4,7 +4,6 @@ package com.android.internal.org.bouncycastle.asn1.x509;
 
 import java.util.Enumeration;
 
-import com.android.internal.org.bouncycastle.asn1.ASN1BitString;
 import com.android.internal.org.bouncycastle.asn1.ASN1EncodableVector;
 import com.android.internal.org.bouncycastle.asn1.ASN1Object;
 import com.android.internal.org.bouncycastle.asn1.ASN1Primitive;
@@ -33,7 +32,7 @@ public class CertificateList
 {
     TBSCertList            tbsCertList;
     AlgorithmIdentifier    sigAlgId;
-    ASN1BitString          sig;
+    DERBitString           sig;
     boolean                isHashCodeSet = false;
     int                    hashCodeValue;
 
@@ -59,14 +58,18 @@ public class CertificateList
         return null;
     }
 
-    private CertificateList(
+    /**
+     * @deprecated use getInstance() method.
+     * @param seq
+     */
+    public CertificateList(
         ASN1Sequence seq)
     {
         if (seq.size() == 3)
         {
             tbsCertList = TBSCertList.getInstance(seq.getObjectAt(0));
             sigAlgId = AlgorithmIdentifier.getInstance(seq.getObjectAt(1));
-            sig = ASN1BitString.getInstance(seq.getObjectAt(2));
+            sig = DERBitString.getInstance(seq.getObjectAt(2));
         }
         else
         {
@@ -94,7 +97,7 @@ public class CertificateList
         return sigAlgId;
     }
 
-    public ASN1BitString getSignature()
+    public DERBitString getSignature()
     {
         return sig;
     }

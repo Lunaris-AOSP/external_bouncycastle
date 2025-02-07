@@ -1,11 +1,11 @@
 package org.bouncycastle.asn1.x509;
 
-import org.bouncycastle.asn1.ASN1BitString;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1TaggedObject;
+import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.x500.X500Name;
 
 /**
@@ -24,7 +24,7 @@ public class Certificate
     ASN1Sequence  seq;
     TBSCertificate tbsCert;
     AlgorithmIdentifier     sigAlgId;
-    ASN1BitString            sig;
+    DERBitString            sig;
 
     public static Certificate getInstance(
         ASN1TaggedObject obj,
@@ -61,7 +61,7 @@ public class Certificate
             tbsCert = TBSCertificate.getInstance(seq.getObjectAt(0));
             sigAlgId = AlgorithmIdentifier.getInstance(seq.getObjectAt(1));
 
-            sig = ASN1BitString.getInstance(seq.getObjectAt(2));
+            sig = DERBitString.getInstance(seq.getObjectAt(2));
         }
         else
         {
@@ -119,7 +119,7 @@ public class Certificate
         return sigAlgId;
     }
 
-    public ASN1BitString getSignature()
+    public DERBitString getSignature()
     {
         return sig;
     }

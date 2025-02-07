@@ -1,5 +1,4 @@
 /* GENERATED SOURCE. DO NOT MODIFY. */
-// BEGIN Android-changed: maintain old behaviour
 package com.android.org.bouncycastle.crypto.digests;
 
 import com.android.org.bouncycastle.crypto.ExtendedDigest;
@@ -161,4 +160,3 @@ public abstract class GeneralDigest
 
     protected abstract void processBlock();
 }
-// END Android-changed: maintain old behaviour

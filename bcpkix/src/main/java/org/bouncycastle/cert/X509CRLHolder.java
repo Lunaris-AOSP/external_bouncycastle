@@ -15,18 +15,11 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
 
-import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Encoding;
 import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Primitive;
-import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
-import org.bouncycastle.asn1.x509.AltSignatureAlgorithm;
-import org.bouncycastle.asn1.x509.AltSignatureValue;
 import org.bouncycastle.asn1.x509.CertificateList;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.Extensions;
@@ -46,7 +39,7 @@ public class X509CRLHolder
     implements Encodable, Serializable
 {
     private static final long serialVersionUID = 20170722001L;
-
+    
     private transient CertificateList x509CRL;
     private transient boolean isIndirect;
     private transient Extensions extensions;
@@ -169,7 +162,7 @@ public class X509CRLHolder
     public X509CRLEntryHolder getRevokedCertificate(BigInteger serialNumber)
     {
         GeneralNames currentCA = issuerName;
-        for (Enumeration en = x509CRL.getRevokedCertificateEnumeration(); en.hasMoreElements(); )
+        for (Enumeration en = x509CRL.getRevokedCertificateEnumeration(); en.hasMoreElements();)
         {
             TBSCertList.CRLEntry entry = (TBSCertList.CRLEntry)en.nextElement();
 
@@ -204,7 +197,7 @@ public class X509CRLHolder
         List l = new ArrayList(entries.length);
         GeneralNames currentCA = issuerName;
 
-        for (Enumeration en = x509CRL.getRevokedCertificateEnumeration(); en.hasMoreElements(); )
+        for (Enumeration en = x509CRL.getRevokedCertificateEnumeration(); en.hasMoreElements();)
         {
             TBSCertList.CRLEntry entry = (TBSCertList.CRLEntry)en.nextElement();
             X509CRLEntryHolder crlEntry = new X509CRLEntryHolder(entry, isIndirect, currentCA);
@@ -216,7 +209,7 @@ public class X509CRLHolder
 
         return l;
     }
-
+    
     /**
      * Return whether or not the holder's CRL contains extensions.
      *
@@ -231,6 +224,7 @@ public class X509CRLHolder
      * Look up the extension associated with the passed in OID.
      *
      * @param oid the OID of the extension of interest.
+     *
      * @return the extension if present, null otherwise.
      */
     public Extension getExtension(ASN1ObjectIdentifier oid)
@@ -330,51 +324,6 @@ public class X509CRLHolder
 
         return verifier.verify(x509CRL.getSignature().getOctets());
     }
-
-    public boolean isAlternativeSignatureValid(ContentVerifierProvider verifierProvider)
-        throws CertException
-    {
-        TBSCertList tbsCrList = x509CRL.getTBSCertList();
-        AltSignatureAlgorithm altSigAlg = AltSignatureAlgorithm.fromExtensions(tbsCrList.getExtensions());
-        AltSignatureValue altSigValue = AltSignatureValue.fromExtensions(tbsCrList.getExtensions());
-
-        ContentVerifier verifier;
-
-        try
-        {
-            verifier = verifierProvider.get(AlgorithmIdentifier.getInstance(altSigAlg.toASN1Primitive()));
-
-            OutputStream sOut = verifier.getOutputStream();
-
-            ASN1Sequence tbsSeq = ASN1Sequence.getInstance(tbsCrList.toASN1Primitive());
-            ASN1EncodableVector v = new ASN1EncodableVector();
-
-            int start = 1;    //  want to skip signature field
-            if (tbsSeq.getObjectAt(0) instanceof ASN1Integer)
-            {
-                v.add(tbsSeq.getObjectAt(0));
-                start++;
-            }
-
-            for (int i = start; i != tbsSeq.size() - 1; i++)
-            {
-                v.add(tbsSeq.getObjectAt(i));
-            }
-            
-            v.add(CertUtils.trimExtensions(0, tbsCrList.getExtensions()));
-
-            new DERSequence(v).encodeTo(sOut, ASN1Encoding.DER);
-
-            sOut.close();
-        }
-        catch (Exception e)
-        {
-            throw new CertException("unable to process signature: " + e.getMessage(), e);
-        }
-
-        return verifier.verify(altSigValue.getSignature().getOctets());
-    }
-
 
     public boolean equals(
         Object o)

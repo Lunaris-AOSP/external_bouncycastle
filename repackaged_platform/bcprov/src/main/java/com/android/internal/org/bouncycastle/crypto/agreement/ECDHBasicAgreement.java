@@ -5,7 +5,6 @@ import java.math.BigInteger;
 
 import com.android.internal.org.bouncycastle.crypto.BasicAgreement;
 import com.android.internal.org.bouncycastle.crypto.CipherParameters;
-import com.android.internal.org.bouncycastle.crypto.CryptoServicesRegistrar;
 import com.android.internal.org.bouncycastle.crypto.params.ECDomainParameters;
 import com.android.internal.org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import com.android.internal.org.bouncycastle.crypto.params.ECPublicKeyParameters;
@@ -37,8 +36,6 @@ public class ECDHBasicAgreement
         CipherParameters key)
     {
         this.key = (ECPrivateKeyParameters)key;
-
-        CryptoServicesRegistrar.checkConstraints(Utils.getDefaultProperties("ECDH", this.key));
     }
 
     public int getFieldSize()

@@ -96,40 +96,24 @@ public class Base64Encoder
         return outPos - outOff;
     }
 
-    public int getEncodedLength(int inputLength)
-    {
-        return (inputLength + 2) / 3 * 4;
-    }
-
-    public int getMaxDecodedLength(int inputLength)
-    {
-        return inputLength / 4 * 3;
-    }
-
     /**
      * encode the input data producing a base 64 output stream.
      *
      * @return the number of bytes produced.
      */
-    public int encode(byte[] buf, int off, int len, OutputStream out)
+    public int encode(byte[] buf, int off, int len, OutputStream out) 
         throws IOException
     {
-        if (len < 0)
-        {
-            return 0;
-        }
-
         byte[] tmp = new byte[72];
-        int remaining = len;
-        while (remaining > 0)
+        while (len > 0)
         {
-            int inLen = Math.min(54, remaining);
+            int inLen = Math.min(54, len);
             int outLen = encode(buf, off, inLen, tmp, 0);
             out.write(tmp, 0, outLen);
             off += inLen;
-            remaining -= inLen;
+            len -= inLen;
         }
-        return (len + 2) / 3 * 4;
+        return ((len + 2) / 3) * 4;
     }
 
     private boolean ignore(

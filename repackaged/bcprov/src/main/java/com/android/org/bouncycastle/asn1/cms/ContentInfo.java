@@ -130,4 +130,3 @@ public class ContentInfo
         return new BERSequence(v);
     }
 }
-

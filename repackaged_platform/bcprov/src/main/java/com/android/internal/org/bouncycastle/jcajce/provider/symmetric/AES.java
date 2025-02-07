@@ -19,13 +19,16 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.NoSuchPaddingException;
 // END Android-added: Needed for setting padding with GCM
 import com.android.internal.org.bouncycastle.asn1.bc.BCObjectIdentifiers;
+// Android-removed: Unsupported algorithms
+// import org.bouncycastle.asn1.cms.CCMParameters;
+import com.android.internal.org.bouncycastle.asn1.cms.GCMParameters;
 import com.android.internal.org.bouncycastle.asn1.nist.NISTObjectIdentifiers;
 import com.android.internal.org.bouncycastle.crypto.BlockCipher;
+import com.android.internal.org.bouncycastle.crypto.BufferedBlockCipher;
 import com.android.internal.org.bouncycastle.crypto.CipherKeyGenerator;
 import com.android.internal.org.bouncycastle.crypto.CipherParameters;
 import com.android.internal.org.bouncycastle.crypto.CryptoServicesRegistrar;
 import com.android.internal.org.bouncycastle.crypto.DataLengthException;
-import com.android.internal.org.bouncycastle.crypto.DefaultBufferedBlockCipher;
 import com.android.internal.org.bouncycastle.crypto.InvalidCipherTextException;
 import com.android.internal.org.bouncycastle.crypto.Mac;
 import com.android.internal.org.bouncycastle.crypto.engines.AESEngine;
@@ -40,13 +43,9 @@ import com.android.internal.org.bouncycastle.crypto.engines.AESWrapEngine;
 import com.android.internal.org.bouncycastle.crypto.modes.CBCBlockCipher;
 // Android-removed: Unsupported algorithms
 // import org.bouncycastle.crypto.modes.CCMBlockCipher;
-// import org.bouncycastle.crypto.modes.CCMModeCipher;
 import com.android.internal.org.bouncycastle.crypto.modes.CFBBlockCipher;
 import com.android.internal.org.bouncycastle.crypto.modes.GCMBlockCipher;
 import com.android.internal.org.bouncycastle.crypto.modes.OFBBlockCipher;
-// Android-removed: Unsupported algorithms
-// import org.bouncycastle.internal.asn1.cms.CCMParameters;
-import com.android.internal.org.bouncycastle.internal.asn1.cms.GCMParameters;
 import com.android.internal.org.bouncycastle.jcajce.provider.config.ConfigurableProvider;
 // Android-removed: Unsupported algorithms
 // import org.bouncycastle.jcajce.provider.symmetric.util.BaseAlgorithmParameterGenerator;
@@ -79,7 +78,7 @@ public final class AES
     private AES()
     {
     }
-
+    
     /**
      * @hide This class is not part of the Android public SDK API
      */
@@ -92,7 +91,7 @@ public final class AES
             {
                 public BlockCipher get()
                 {
-                    return AESEngine.newInstance();
+                    return new AESEngine();
                 }
             });
         }
@@ -102,11 +101,11 @@ public final class AES
      * @hide This class is not part of the Android public SDK API
      */
     public static class CBC
-        extends BaseBlockCipher
+       extends BaseBlockCipher
     {
         public CBC()
         {
-            super(CBCBlockCipher.newInstance(AESEngine.newInstance()), 128);
+            super(new CBCBlockCipher(new AESEngine()), 128);
         }
     }
 
@@ -118,7 +117,7 @@ public final class AES
     {
         public CFB()
         {
-            super(new DefaultBufferedBlockCipher(CFBBlockCipher.newInstance(AESEngine.newInstance(), 128)), 128);
+            super(new BufferedBlockCipher(new CFBBlockCipher(new AESEngine(), 128)), 128);
         }
     }
 
@@ -130,7 +129,7 @@ public final class AES
     {
         public OFB()
         {
-            super(new DefaultBufferedBlockCipher(new OFBBlockCipher(AESEngine.newInstance(), 128)), 128);
+            super(new BufferedBlockCipher(new OFBBlockCipher(new AESEngine(), 128)), 128);
         }
     }
 
@@ -162,7 +161,7 @@ public final class AES
     {
         public CCM()
         {
-            super(CCMBlockCipher.newInstance(AESEngine.newInstance()), false, 12);
+            super(new CCMBlockCipher(new AESEngine()), false, 12);
         }
     }
 
@@ -171,7 +170,7 @@ public final class AES
     {
         public AESCMAC()
         {
-            super(new CMac(AESEngine.newInstance()));
+            super(new CMac(new AESEngine()));
         }
     }
 
@@ -180,7 +179,7 @@ public final class AES
     {
         public AESGMAC()
         {
-            super(new GMac(GCMBlockCipher.newInstance(AESEngine.newInstance())));
+            super(new GMac(new GCMBlockCipher(new AESEngine())));
         }
     }
 
@@ -195,7 +194,7 @@ public final class AES
         private static class CCMMac
             implements Mac
         {
-            private final CCMModeCipher ccm = CCMBlockCipher.newInstance(AESEngine.newInstance());
+            private final CCMBlockCipher ccm = new CCMBlockCipher(new AESEngine());
 
             private int macLength = 8;
 
@@ -250,7 +249,7 @@ public final class AES
     }
 
     static public class KeyFactory
-        extends BaseSecretKeyFactory
+         extends BaseSecretKeyFactory
     {
         public KeyFactory()
         {
@@ -263,7 +262,7 @@ public final class AES
     {
         public Poly1305()
         {
-            super(new org.bouncycastle.crypto.macs.Poly1305(AESEngine.newInstance()));
+            super(new org.bouncycastle.crypto.macs.Poly1305(new AESEngine()));
         }
     }
 
@@ -306,7 +305,7 @@ public final class AES
     {
         public RFC3211Wrap()
         {
-            super(new RFC3211WrapEngine(AESEngine.newInstance()), 16);
+            super(new RFC3211WrapEngine(new AESEngine()), 16);
         }
     }
 
@@ -315,7 +314,7 @@ public final class AES
     {
         public RFC5649Wrap()
         {
-            super(new RFC5649WrapEngine(AESEngine.newInstance()));
+            super(new RFC5649WrapEngine(new AESEngine()));
         }
     }
     */
@@ -330,7 +329,7 @@ public final class AES
     {
         public PBEWithAESCBC()
         {
-            super(CBCBlockCipher.newInstance(AESEngine.newInstance()));
+            super(new CBCBlockCipher(new AESEngine()));
         }
     }
 
@@ -343,7 +342,7 @@ public final class AES
     {
         public PBEWithSHA1AESCBC128()
         {
-            super(CBCBlockCipher.newInstance(AESEngine.newInstance()), PKCS12, SHA1, 128, 16);
+            super(new CBCBlockCipher(new AESEngine()), PKCS12, SHA1, 128, 16);
         }
     }
 
@@ -355,7 +354,7 @@ public final class AES
     {
         public PBEWithSHA1AESCBC192()
         {
-            super(CBCBlockCipher.newInstance(AESEngine.newInstance()), PKCS12, SHA1, 192, 16);
+            super(new CBCBlockCipher(new AESEngine()), PKCS12, SHA1, 192, 16);
         }
     }
 
@@ -367,7 +366,7 @@ public final class AES
     {
         public PBEWithSHA1AESCBC256()
         {
-            super(CBCBlockCipher.newInstance(AESEngine.newInstance()), PKCS12, SHA1, 256, 16);
+            super(new CBCBlockCipher(new AESEngine()), PKCS12, SHA1, 256, 16);
         }
     }
 
@@ -380,7 +379,7 @@ public final class AES
     {
         public PBEWithSHA256AESCBC128()
         {
-            super(CBCBlockCipher.newInstance(AESEngine.newInstance()), PKCS12, SHA256, 128, 16);
+            super(new CBCBlockCipher(new AESEngine()), PKCS12, SHA256, 128, 16);
         }
     }
 
@@ -392,7 +391,7 @@ public final class AES
     {
         public PBEWithSHA256AESCBC192()
         {
-            super(CBCBlockCipher.newInstance(AESEngine.newInstance()), PKCS12, SHA256, 192, 16);
+            super(new CBCBlockCipher(new AESEngine()), PKCS12, SHA256, 192, 16);
         }
     }
 
@@ -404,7 +403,7 @@ public final class AES
     {
         public PBEWithSHA256AESCBC256()
         {
-            super(CBCBlockCipher.newInstance(AESEngine.newInstance()), PKCS12, SHA256, 256, 16);
+            super(new CBCBlockCipher(new AESEngine()), PKCS12, SHA256, 256, 16);
         }
     }
 
@@ -473,7 +472,7 @@ public final class AES
             super("PBEWithSHA1And128BitAES-CBC-BC", null, true, PKCS12, SHA1, 128, 128);
         }
     }
-
+    
     /**
      * PBEWithSHA1And192BitAES-BC
      * @hide This class is not part of the Android public SDK API
@@ -486,7 +485,7 @@ public final class AES
             super("PBEWithSHA1And192BitAES-CBC-BC", null, true, PKCS12, SHA1, 192, 128);
         }
     }
-
+    
     /**
      * PBEWithSHA1And256BitAES-BC
      * @hide This class is not part of the Android public SDK API
@@ -499,7 +498,7 @@ public final class AES
             super("PBEWithSHA1And256BitAES-CBC-BC", null, true, PKCS12, SHA1, 256, 128);
         }
     }
-
+    
     /**
      * PBEWithSHA256And128BitAES-BC
      * @hide This class is not part of the Android public SDK API
@@ -512,7 +511,7 @@ public final class AES
             super("PBEWithSHA256And128BitAES-CBC-BC", null, true, PKCS12, SHA256, 128, 128);
         }
     }
-
+    
     /**
      * PBEWithSHA256And192BitAES-BC
      * @hide This class is not part of the Android public SDK API
@@ -525,7 +524,7 @@ public final class AES
             super("PBEWithSHA256And192BitAES-CBC-BC", null, true, PKCS12, SHA256, 192, 128);
         }
     }
-
+    
     /**
      * PBEWithSHA256And256BitAES-BC
      * @hide This class is not part of the Android public SDK API
@@ -538,7 +537,7 @@ public final class AES
             super("PBEWithSHA256And256BitAES-CBC-BC", null, true, PKCS12, SHA256, 256, 128);
         }
     }
-
+    
     /**
      * PBEWithMD5And128BitAES-OpenSSL
      * @hide This class is not part of the Android public SDK API
@@ -551,7 +550,7 @@ public final class AES
             super("PBEWithMD5And128BitAES-CBC-OpenSSL", null, true, OPENSSL, MD5, 128, 128);
         }
     }
-
+    
     /**
      * PBEWithMD5And192BitAES-OpenSSL
      * @hide This class is not part of the Android public SDK API
@@ -564,7 +563,7 @@ public final class AES
             super("PBEWithMD5And192BitAES-CBC-OpenSSL", null, true, OPENSSL, MD5, 192, 128);
         }
     }
-
+    
     /**
      * PBEWithMD5And256BitAES-OpenSSL
      * @hide This class is not part of the Android public SDK API
@@ -593,7 +592,7 @@ public final class AES
 
         protected AlgorithmParameters engineGenerateParameters()
         {
-            byte[] iv = new byte[16];
+            byte[]  iv = new byte[16];
 
             if (random == null)
             {
@@ -632,7 +631,7 @@ public final class AES
 
         protected AlgorithmParameters engineGenerateParameters()
         {
-            byte[] iv = new byte[12];
+            byte[]  iv = new byte[12];
 
             if (random == null)
             {
@@ -671,7 +670,7 @@ public final class AES
 
         protected AlgorithmParameters engineGenerateParameters()
         {
-            byte[] nonce = new byte[12];
+            byte[]  nonce = new byte[12];
 
             if (random == null)
             {
@@ -779,7 +778,7 @@ public final class AES
         {
             if (paramSpec == AlgorithmParameterSpec.class || GcmSpecUtil.isGcmSpec(paramSpec))
             {
-                if (GcmSpecUtil.gcmSpecExtractable())
+                if (GcmSpecUtil.gcmSpecExists())
                 {
                     return GcmSpecUtil.extractGcmSpec(gcmParams.toASN1Primitive());
                 }
@@ -866,7 +865,7 @@ public final class AES
         {
             if (paramSpec == AlgorithmParameterSpec.class || GcmSpecUtil.isGcmSpec(paramSpec))
             {
-                if (GcmSpecUtil.gcmSpecExtractable())
+                if (GcmSpecUtil.gcmSpecExists())
                 {
                     return GcmSpecUtil.extractGcmSpec(ccmParams.toASN1Primitive());
                 }
@@ -894,7 +893,7 @@ public final class AES
         extends SymmetricAlgorithmProvider
     {
         private static final String PREFIX = AES.class.getName();
-
+        
         /**
          * These three got introduced in some messages as a result of a typo in an
          * early document. We don't produce anything using these OID values, but we'll
@@ -1056,31 +1055,31 @@ public final class AES
             provider.addAlgorithm("Cipher.PBEWITHSHA256AND128BITAES-CBC-BC", PREFIX + "$PBEWithSHA256AESCBC128");
             provider.addAlgorithm("Cipher.PBEWITHSHA256AND192BITAES-CBC-BC", PREFIX + "$PBEWithSHA256AESCBC192");
             provider.addAlgorithm("Cipher.PBEWITHSHA256AND256BITAES-CBC-BC", PREFIX + "$PBEWithSHA256AESCBC256");
-
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA1AND128BITAES-CBC-BC", "PBEWITHSHAAND128BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA1AND192BITAES-CBC-BC", "PBEWITHSHAAND192BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA1AND256BITAES-CBC-BC", "PBEWITHSHAAND256BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-1AND128BITAES-CBC-BC", "PBEWITHSHAAND128BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-1AND192BITAES-CBC-BC", "PBEWITHSHAAND192BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-1AND256BITAES-CBC-BC", "PBEWITHSHAAND256BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHAAND128BITAES-BC", "PBEWITHSHAAND128BITAES-CBC-BC");
+            
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA1AND128BITAES-CBC-BC","PBEWITHSHAAND128BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA1AND192BITAES-CBC-BC","PBEWITHSHAAND192BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA1AND256BITAES-CBC-BC","PBEWITHSHAAND256BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-1AND128BITAES-CBC-BC","PBEWITHSHAAND128BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-1AND192BITAES-CBC-BC","PBEWITHSHAAND192BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-1AND256BITAES-CBC-BC","PBEWITHSHAAND256BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHAAND128BITAES-BC","PBEWITHSHAAND128BITAES-CBC-BC");
             provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHAAND192BITAES-BC", "PBEWITHSHAAND192BITAES-CBC-BC");
             provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHAAND256BITAES-BC", "PBEWITHSHAAND256BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA1AND128BITAES-BC", "PBEWITHSHAAND128BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA1AND192BITAES-BC", "PBEWITHSHAAND192BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA1AND256BITAES-BC", "PBEWITHSHAAND256BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-1AND128BITAES-BC", "PBEWITHSHAAND128BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-1AND192BITAES-BC", "PBEWITHSHAAND192BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-1AND256BITAES-BC", "PBEWITHSHAAND256BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-256AND128BITAES-CBC-BC", "PBEWITHSHA256AND128BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-256AND192BITAES-CBC-BC", "PBEWITHSHA256AND192BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-256AND256BITAES-CBC-BC", "PBEWITHSHA256AND256BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA256AND128BITAES-BC", "PBEWITHSHA256AND128BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA256AND192BITAES-BC", "PBEWITHSHA256AND192BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA256AND256BITAES-BC", "PBEWITHSHA256AND256BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-256AND128BITAES-BC", "PBEWITHSHA256AND128BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-256AND192BITAES-BC", "PBEWITHSHA256AND192BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-256AND256BITAES-BC", "PBEWITHSHA256AND256BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA1AND128BITAES-BC","PBEWITHSHAAND128BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA1AND192BITAES-BC","PBEWITHSHAAND192BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA1AND256BITAES-BC","PBEWITHSHAAND256BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-1AND128BITAES-BC","PBEWITHSHAAND128BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-1AND192BITAES-BC","PBEWITHSHAAND192BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-1AND256BITAES-BC","PBEWITHSHAAND256BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-256AND128BITAES-CBC-BC","PBEWITHSHA256AND128BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-256AND192BITAES-CBC-BC","PBEWITHSHA256AND192BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-256AND256BITAES-CBC-BC","PBEWITHSHA256AND256BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA256AND128BITAES-BC","PBEWITHSHA256AND128BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA256AND192BITAES-BC","PBEWITHSHA256AND192BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA256AND256BITAES-BC","PBEWITHSHA256AND256BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-256AND128BITAES-BC","PBEWITHSHA256AND128BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-256AND192BITAES-BC","PBEWITHSHA256AND192BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.Cipher.PBEWITHSHA-256AND256BITAES-BC","PBEWITHSHA256AND256BITAES-CBC-BC");
 
             provider.addAlgorithm("Cipher.PBEWITHMD5AND128BITAES-CBC-OPENSSL", PREFIX + "$PBEWithAESCBC");
             provider.addAlgorithm("Cipher.PBEWITHMD5AND192BITAES-CBC-OPENSSL", PREFIX + "$PBEWithAESCBC");
@@ -1094,48 +1093,48 @@ public final class AES
             provider.addAlgorithm("SecretKeyFactory.PBEWITHMD5AND128BITAES-CBC-OPENSSL", PREFIX + "$PBEWithMD5And128BitAESCBCOpenSSL");
             provider.addAlgorithm("SecretKeyFactory.PBEWITHMD5AND192BITAES-CBC-OPENSSL", PREFIX + "$PBEWithMD5And192BitAESCBCOpenSSL");
             provider.addAlgorithm("SecretKeyFactory.PBEWITHMD5AND256BITAES-CBC-OPENSSL", PREFIX + "$PBEWithMD5And256BitAESCBCOpenSSL");
-
+            
             provider.addAlgorithm("SecretKeyFactory.PBEWITHSHAAND128BITAES-CBC-BC", PREFIX + "$PBEWithSHAAnd128BitAESBC");
             provider.addAlgorithm("SecretKeyFactory.PBEWITHSHAAND192BITAES-CBC-BC", PREFIX + "$PBEWithSHAAnd192BitAESBC");
             provider.addAlgorithm("SecretKeyFactory.PBEWITHSHAAND256BITAES-CBC-BC", PREFIX + "$PBEWithSHAAnd256BitAESBC");
             provider.addAlgorithm("SecretKeyFactory.PBEWITHSHA256AND128BITAES-CBC-BC", PREFIX + "$PBEWithSHA256And128BitAESBC");
             provider.addAlgorithm("SecretKeyFactory.PBEWITHSHA256AND192BITAES-CBC-BC", PREFIX + "$PBEWithSHA256And192BitAESBC");
             provider.addAlgorithm("SecretKeyFactory.PBEWITHSHA256AND256BITAES-CBC-BC", PREFIX + "$PBEWithSHA256And256BitAESBC");
-            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA1AND128BITAES-CBC-BC", "PBEWITHSHAAND128BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA1AND192BITAES-CBC-BC", "PBEWITHSHAAND192BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA1AND256BITAES-CBC-BC", "PBEWITHSHAAND256BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-1AND128BITAES-CBC-BC", "PBEWITHSHAAND128BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-1AND192BITAES-CBC-BC", "PBEWITHSHAAND192BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-1AND256BITAES-CBC-BC", "PBEWITHSHAAND256BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-256AND128BITAES-CBC-BC", "PBEWITHSHA256AND128BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-256AND192BITAES-CBC-BC", "PBEWITHSHA256AND192BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-256AND256BITAES-CBC-BC", "PBEWITHSHA256AND256BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-256AND128BITAES-BC", "PBEWITHSHA256AND128BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-256AND192BITAES-BC", "PBEWITHSHA256AND192BITAES-CBC-BC");
-            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-256AND256BITAES-BC", "PBEWITHSHA256AND256BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA1AND128BITAES-CBC-BC","PBEWITHSHAAND128BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA1AND192BITAES-CBC-BC","PBEWITHSHAAND192BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA1AND256BITAES-CBC-BC","PBEWITHSHAAND256BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-1AND128BITAES-CBC-BC","PBEWITHSHAAND128BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-1AND192BITAES-CBC-BC","PBEWITHSHAAND192BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-1AND256BITAES-CBC-BC","PBEWITHSHAAND256BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-256AND128BITAES-CBC-BC","PBEWITHSHA256AND128BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-256AND192BITAES-CBC-BC","PBEWITHSHA256AND192BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-256AND256BITAES-CBC-BC","PBEWITHSHA256AND256BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-256AND128BITAES-BC","PBEWITHSHA256AND128BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-256AND192BITAES-BC","PBEWITHSHA256AND192BITAES-CBC-BC");
+            provider.addAlgorithm("Alg.Alias.SecretKeyFactory.PBEWITHSHA-256AND256BITAES-BC","PBEWITHSHA256AND256BITAES-CBC-BC");
             provider.addAlgorithm("Alg.Alias.SecretKeyFactory", BCObjectIdentifiers.bc_pbe_sha1_pkcs12_aes128_cbc, "PBEWITHSHAAND128BITAES-CBC-BC");
             provider.addAlgorithm("Alg.Alias.SecretKeyFactory", BCObjectIdentifiers.bc_pbe_sha1_pkcs12_aes192_cbc, "PBEWITHSHAAND192BITAES-CBC-BC");
             provider.addAlgorithm("Alg.Alias.SecretKeyFactory", BCObjectIdentifiers.bc_pbe_sha1_pkcs12_aes256_cbc, "PBEWITHSHAAND256BITAES-CBC-BC");
             provider.addAlgorithm("Alg.Alias.SecretKeyFactory", BCObjectIdentifiers.bc_pbe_sha256_pkcs12_aes128_cbc, "PBEWITHSHA256AND128BITAES-CBC-BC");
             provider.addAlgorithm("Alg.Alias.SecretKeyFactory", BCObjectIdentifiers.bc_pbe_sha256_pkcs12_aes192_cbc, "PBEWITHSHA256AND192BITAES-CBC-BC");
             provider.addAlgorithm("Alg.Alias.SecretKeyFactory", BCObjectIdentifiers.bc_pbe_sha256_pkcs12_aes256_cbc, "PBEWITHSHA256AND256BITAES-CBC-BC");
-
+            
             provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHAAND128BITAES-CBC-BC", "PKCS12PBE");
             provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHAAND192BITAES-CBC-BC", "PKCS12PBE");
             provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHAAND256BITAES-CBC-BC", "PKCS12PBE");
             provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA256AND128BITAES-CBC-BC", "PKCS12PBE");
             provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA256AND192BITAES-CBC-BC", "PKCS12PBE");
             provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA256AND256BITAES-CBC-BC", "PKCS12PBE");
-            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA1AND128BITAES-CBC-BC", "PKCS12PBE");
-            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA1AND192BITAES-CBC-BC", "PKCS12PBE");
-            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA1AND256BITAES-CBC-BC", "PKCS12PBE");
-            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA-1AND128BITAES-CBC-BC", "PKCS12PBE");
-            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA-1AND192BITAES-CBC-BC", "PKCS12PBE");
-            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA-1AND256BITAES-CBC-BC", "PKCS12PBE");
-            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA-256AND128BITAES-CBC-BC", "PKCS12PBE");
-            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA-256AND192BITAES-CBC-BC", "PKCS12PBE");
-            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA-256AND256BITAES-CBC-BC", "PKCS12PBE");
-
+            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA1AND128BITAES-CBC-BC","PKCS12PBE");
+            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA1AND192BITAES-CBC-BC","PKCS12PBE");
+            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA1AND256BITAES-CBC-BC","PKCS12PBE");
+            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA-1AND128BITAES-CBC-BC","PKCS12PBE");
+            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA-1AND192BITAES-CBC-BC","PKCS12PBE");
+            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA-1AND256BITAES-CBC-BC","PKCS12PBE");
+            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA-256AND128BITAES-CBC-BC","PKCS12PBE");
+            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA-256AND192BITAES-CBC-BC","PKCS12PBE");
+            provider.addAlgorithm("Alg.Alias.AlgorithmParameters.PBEWITHSHA-256AND256BITAES-CBC-BC","PKCS12PBE"); 
+            
             provider.addAlgorithm("Alg.Alias.AlgorithmParameters." + BCObjectIdentifiers.bc_pbe_sha1_pkcs12_aes128_cbc.getId(), "PKCS12PBE");
             provider.addAlgorithm("Alg.Alias.AlgorithmParameters." + BCObjectIdentifiers.bc_pbe_sha1_pkcs12_aes192_cbc.getId(), "PKCS12PBE");
             provider.addAlgorithm("Alg.Alias.AlgorithmParameters." + BCObjectIdentifiers.bc_pbe_sha1_pkcs12_aes256_cbc.getId(), "PKCS12PBE");

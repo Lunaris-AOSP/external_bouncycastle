@@ -102,7 +102,7 @@ public class TBSCertList
         }
     }
 
-    private static class RevokedCertificatesEnumeration
+    private class RevokedCertificatesEnumeration
         implements Enumeration
     {
         private final Enumeration en;
@@ -123,7 +123,7 @@ public class TBSCertList
         }
     }
 
-    private static class EmptyEnumeration
+    private class EmptyEnumeration
         implements Enumeration
     {
         public boolean hasMoreElements()

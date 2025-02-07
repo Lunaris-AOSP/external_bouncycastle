@@ -8,7 +8,7 @@ import java.io.IOException;
  * @hide This class is not part of the Android public SDK API
  */
 public class DERExternalParser
-    implements ASN1ExternalParser
+    implements ASN1Encodable, InMemoryRepresentable
 {
     private ASN1StreamParser _parser;
 
@@ -37,7 +37,14 @@ public class DERExternalParser
     public ASN1Primitive getLoadedObject()
         throws IOException
     {
-        return parse(_parser);
+        try
+        {
+            return new DLExternal(_parser.readVector());
+        }
+        catch (IllegalArgumentException e)
+        {
+            throw new ASN1Exception(e.getMessage(), e);
+        }
     }
 
     /**
@@ -58,18 +65,6 @@ public class DERExternalParser
         catch (IllegalArgumentException ioe)
         {
             throw new ASN1ParsingException("unable to get DER object", ioe);
-        }
-    }
-
-    static DLExternal parse(ASN1StreamParser sp) throws IOException
-    {
-        try
-        {
-            return new DLExternal(new DLSequence(sp.readVector()));
-        }
-        catch (IllegalArgumentException e)
-        {
-            throw new ASN1Exception(e.getMessage(), e);
         }
     }
 }

@@ -34,13 +34,13 @@ import javax.security.auth.x500.X500Principal;
 import org.bouncycastle.asn1.ASN1BitString;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Encoding;
-import org.bouncycastle.asn1.ASN1IA5String;
 import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1String;
+import org.bouncycastle.asn1.DERBitString;
+import org.bouncycastle.asn1.DERIA5String;
 import org.bouncycastle.asn1.DERNull;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.misc.MiscObjectIdentifiers;
@@ -107,7 +107,7 @@ public class X509CertificateObject
             byte[] bytes = this.getExtensionBytes("2.5.29.15");
             if (bytes != null)
             {
-                ASN1BitString bits = ASN1BitString.getInstance(ASN1Primitive.fromByteArray(bytes));
+                ASN1BitString bits = DERBitString.getInstance(ASN1Primitive.fromByteArray(bytes));
 
                 bytes = bits.getBytes();
                 int length = (bytes.length * 8) - bits.getPadBits();
@@ -290,7 +290,7 @@ public class X509CertificateObject
 
     public boolean[] getIssuerUniqueID()
     {
-        ASN1BitString    id = c.getTBSCertificate().getIssuerUniqueId();
+        DERBitString    id = c.getTBSCertificate().getIssuerUniqueId();
 
         if (id != null)
         {
@@ -310,7 +310,7 @@ public class X509CertificateObject
 
     public boolean[] getSubjectUniqueID()
     {
-        ASN1BitString    id = c.getTBSCertificate().getSubjectUniqueId();
+        DERBitString    id = c.getTBSCertificate().getSubjectUniqueId();
 
         if (id != null)
         {
@@ -364,18 +364,26 @@ public class X509CertificateObject
     
     public int getBasicConstraints()
     {
-        if (basicConstraints == null || !basicConstraints.isCA())
+        if (basicConstraints != null)
         {
-            return -1;
+            if (basicConstraints.isCA())
+            {
+                if (basicConstraints.getPathLenConstraint() == null)
+                {
+                    return Integer.MAX_VALUE;
+                }
+                else
+                {
+                    return basicConstraints.getPathLenConstraint().intValue();
+                }
+            }
+            else
+            {
+                return -1;
+            }
         }
 
-        ASN1Integer pathLenConstraint = basicConstraints.getPathLenConstraintInteger();
-        if (pathLenConstraint == null)
-        {
-            return Integer.MAX_VALUE;
-        }
-
-        return pathLenConstraint.intPositiveValueExact();
+        return -1;
     }
 
     public Collection getSubjectAlternativeNames()
@@ -701,15 +709,15 @@ public class X509CertificateObject
                         }
                         else if (oid.equals(MiscObjectIdentifiers.netscapeCertType))
                         {
-                            buf.append(new NetscapeCertType((ASN1BitString)dIn.readObject())).append(nl);
+                            buf.append(new NetscapeCertType((DERBitString)dIn.readObject())).append(nl);
                         }
                         else if (oid.equals(MiscObjectIdentifiers.netscapeRevocationURL))
                         {
-                            buf.append(new NetscapeRevocationURL((ASN1IA5String)dIn.readObject())).append(nl);
+                            buf.append(new NetscapeRevocationURL((DERIA5String)dIn.readObject())).append(nl);
                         }
                         else if (oid.equals(MiscObjectIdentifiers.verisignCzagExtension))
                         {
-                            buf.append(new VerisignCzagExtension((ASN1IA5String)dIn.readObject())).append(nl);
+                            buf.append(new VerisignCzagExtension((DERIA5String)dIn.readObject())).append(nl);
                         }
                         else 
                         {

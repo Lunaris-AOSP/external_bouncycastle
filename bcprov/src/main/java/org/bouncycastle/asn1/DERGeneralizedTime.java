@@ -42,39 +42,39 @@ public class DERGeneralizedTime
 
     private byte[] getDERTime()
     {
-        if (contents[contents.length - 1] == 'Z')
+        if (time[time.length - 1] == 'Z')
         {
             if (!hasMinutes())
             {
-                byte[] derTime = new byte[contents.length + 4];
+                byte[] derTime = new byte[time.length + 4];
 
-                System.arraycopy(contents, 0, derTime, 0, contents.length - 1);
-                System.arraycopy(Strings.toByteArray("0000Z"), 0, derTime, contents.length - 1, 5);
+                System.arraycopy(time, 0, derTime, 0, time.length - 1);
+                System.arraycopy(Strings.toByteArray("0000Z"), 0, derTime, time.length - 1, 5);
 
                 return derTime;
             }
             else if (!hasSeconds())
             {
-                byte[] derTime = new byte[contents.length + 2];
+                byte[] derTime = new byte[time.length + 2];
 
-                System.arraycopy(contents, 0, derTime, 0, contents.length - 1);
-                System.arraycopy(Strings.toByteArray("00Z"), 0, derTime, contents.length - 1, 3);
+                System.arraycopy(time, 0, derTime, 0, time.length - 1);
+                System.arraycopy(Strings.toByteArray("00Z"), 0, derTime, time.length - 1, 3);
 
                 return derTime;
             }
             else if (hasFractionalSeconds())
             {
-                int ind = contents.length - 2;
-                while (ind > 0 && contents[ind] == '0')
+                int ind = time.length - 2;
+                while (ind > 0 && time[ind] == '0')
                 {
                     ind--;
                 }
 
-                if (contents[ind] == '.')
+                if (time[ind] == '.')
                 {
                     byte[] derTime = new byte[ind + 1];
 
-                    System.arraycopy(contents, 0, derTime, 0, ind);
+                    System.arraycopy(time, 0, derTime, 0, ind);
                     derTime[ind] = (byte)'Z';
 
                     return derTime;
@@ -83,7 +83,7 @@ public class DERGeneralizedTime
                 {
                     byte[] derTime = new byte[ind + 2];
 
-                    System.arraycopy(contents, 0, derTime, 0, ind + 1);
+                    System.arraycopy(time, 0, derTime, 0, ind + 1);
                     derTime[ind + 1] = (byte)'Z';
 
                     return derTime;
@@ -91,23 +91,25 @@ public class DERGeneralizedTime
             }
             else
             {
-                return contents;
+                return time;
             }
         }
         else
         {
-            return contents; // TODO: is there a better way?
+            return time; // TODO: is there a better way?
         }
     }
 
-    int encodedLength(boolean withTag)
+    int encodedLength()
     {
-        return ASN1OutputStream.getLengthOfEncodingDL(withTag, getDERTime().length);
+        int length = getDERTime().length;
+
+        return 1 + StreamUtil.calculateBodyLength(length) + length;
     }
 
     void encode(ASN1OutputStream out, boolean withTag) throws IOException
     {
-        out.writeEncodingDL(withTag, BERTags.GENERALIZED_TIME, getDERTime());
+        out.writeEncoded(withTag, BERTags.GENERALIZED_TIME, getDERTime());
     }
 
     ASN1Primitive toDERObject()

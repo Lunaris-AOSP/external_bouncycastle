@@ -38,7 +38,7 @@ public class X9ECParameters
         ASN1Sequence  seq)
     {
         if (!(seq.getObjectAt(0) instanceof ASN1Integer)
-            || !((ASN1Integer)seq.getObjectAt(0)).hasValue(1))
+            || !((ASN1Integer)seq.getObjectAt(0)).hasValue(ONE))
         {
             throw new IllegalArgumentException("bad version in X9ECParameters");
         }

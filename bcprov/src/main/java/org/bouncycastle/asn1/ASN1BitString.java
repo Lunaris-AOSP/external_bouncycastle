@@ -1,67 +1,23 @@
 package org.bouncycastle.asn1;
 
-import java.io.ByteArrayInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
 import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.io.Streams;
 
 /**
  * Base class for BIT STRING objects
  */
 public abstract class ASN1BitString
     extends ASN1Primitive
-    implements ASN1String, ASN1BitStringParser
+    implements ASN1String
 {
-    static final ASN1UniversalType TYPE = new ASN1UniversalType(ASN1BitString.class, BERTags.BIT_STRING)
-    {
-        ASN1Primitive fromImplicitPrimitive(DEROctetString octetString)
-        {
-            return createPrimitive(octetString.getOctets());
-        }
-
-        ASN1Primitive fromImplicitConstructed(ASN1Sequence sequence)
-        {
-            return sequence.toASN1BitString();
-        }
-    };
-
-    public static ASN1BitString getInstance(Object obj)
-    {
-        if (obj == null || obj instanceof ASN1BitString)
-        {
-            return (ASN1BitString)obj;
-        }
-//      else if (obj instanceof ASN1BitStringParser)
-        else if (obj instanceof ASN1Encodable)
-        {
-            ASN1Primitive primitive = ((ASN1Encodable)obj).toASN1Primitive();
-            if (primitive instanceof ASN1BitString)
-            {
-                return (ASN1BitString)primitive;
-            }
-        }
-        else if (obj instanceof byte[])
-        {
-            try
-            {
-                return (ASN1BitString)TYPE.fromByteArray((byte[])obj);
-            }
-            catch (IOException e)
-            {
-                throw new IllegalArgumentException("failed to construct BIT STRING from byte[]: " + e.getMessage());
-            }
-        }
-
-        throw new IllegalArgumentException("illegal object in getInstance: " + obj.getClass().getName());
-    }
-
-    public static ASN1BitString getInstance(ASN1TaggedObject taggedObject, boolean explicit)
-    {
-        return (ASN1BitString)TYPE.getContextInstance(taggedObject, explicit);
-    }
-
     private static final char[]  table = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+
+    protected final byte[]      data;
+    protected final int         padBits;
 
     /**
      * @param bitString an int containing the BIT STRING
@@ -143,16 +99,15 @@ public abstract class ASN1BitString
         return result;
     }
 
-    final byte[] contents;
-
-    ASN1BitString(byte data, int padBits)
+    protected ASN1BitString(byte data, int padBits)
     {
         if (padBits > 7 || padBits < 0)
         {
             throw new IllegalArgumentException("pad bits cannot be greater than 7 or less than 0");
         }
 
-        this.contents = new byte[]{ (byte)padBits, data };
+        this.data = new byte[]{ data };
+        this.padBits = padBits;
     }
 
     /**
@@ -161,7 +116,9 @@ public abstract class ASN1BitString
      * @param data the octets making up the bit string.
      * @param padBits the number of extra bits at the end of the string.
      */
-    ASN1BitString(byte[] data, int padBits)
+    public ASN1BitString(
+        byte[]  data,
+        int     padBits)
     {
         if (data == null)
         {
@@ -176,58 +133,8 @@ public abstract class ASN1BitString
             throw new IllegalArgumentException("pad bits cannot be greater than 7 or less than 0");
         }
 
-        this.contents = Arrays.prepend(data, (byte)padBits);
-    }
-
-    ASN1BitString(byte[] contents, boolean check)
-    {
-        if (check)
-        {
-            if (null == contents)
-            {
-                throw new NullPointerException("'contents' cannot be null");
-            }
-            if (contents.length < 1)
-            {
-                throw new IllegalArgumentException("'contents' cannot be empty");
-            }
-
-            int padBits = contents[0] & 0xFF;
-            if (padBits > 0)
-            {
-                if (contents.length < 2)
-                {
-                    throw new IllegalArgumentException("zero length data with non-zero pad bits");
-                }
-                if (padBits > 7)
-                {
-                    throw new IllegalArgumentException("pad bits cannot be greater than 7 or less than 0");
-                }
-            }
-        }
-
-        this.contents = contents;
-    }
-
-    public InputStream getBitStream() throws IOException
-    {
-        return new ByteArrayInputStream(contents, 1, contents.length - 1);
-    }
-
-    public InputStream getOctetStream() throws IOException
-    {
-        int padBits = contents[0] & 0xFF;
-        if (0 != padBits)
-        {
-            throw new IOException("expected octet-aligned bitstring, but found padBits: " + padBits);
-        }
-
-        return getBitStream();
-    }
-
-    public ASN1BitStringParser parser()
-    {
-        return this;
+        this.data = Arrays.clone(data);
+        this.padBits = padBits;
     }
 
     /**
@@ -237,6 +144,8 @@ public abstract class ASN1BitString
      */
     public String getString()
     {
+        StringBuffer buf = new StringBuffer("#");
+
         byte[] string;
         try
         {
@@ -247,14 +156,10 @@ public abstract class ASN1BitString
             throw new ASN1ParsingException("Internal error encoding BitString: " + e.getMessage(), e);
         }
 
-        StringBuffer buf = new StringBuffer(1 + string.length * 2);
-        buf.append('#');
-
         for (int i = 0; i != string.length; i++)
         {
-            byte b = string[i];
-            buf.append(table[(b >>> 4) & 0xf]);
-            buf.append(table[b & 0xf]);
+            buf.append(table[(string[i] >>> 4) & 0xf]);
+            buf.append(table[string[i] & 0xf]);
         }
 
         return buf.toString();
@@ -266,16 +171,15 @@ public abstract class ASN1BitString
     public int intValue()
     {
         int value = 0;
-        int end = Math.min(5, contents.length - 1);
-        for (int i = 1; i < end; ++i)
+        int end = Math.min(4, data.length - 1);
+        for (int i = 0; i < end; ++i)
         {
-            value |= (contents[i] & 0xFF) << (8 * (i - 1));
+            value |= (data[i] & 0xFF) << (8 * i);
         }
-        if (1 <= end && end < 5)
+        if (0 <= end && end < 4)
         {
-            int padBits = contents[0] & 0xFF;
-            byte der = (byte)(contents[end] & (0xFF << padBits));
-            value |= (der & 0xFF) << (8 * (end - 1));
+            byte der = (byte)(data[end] & (0xFF << padBits));
+            value |= (der & 0xFF) << (8 * end);
         }
         return value;
     }
@@ -289,31 +193,30 @@ public abstract class ASN1BitString
      */
     public byte[] getOctets()
     {
-        if (contents[0] != 0)
+        if (padBits != 0)
         {
             throw new IllegalStateException("attempt to get non-octet aligned data from BIT STRING");
         }
 
-        return Arrays.copyOfRange(contents, 1, contents.length);
+        return Arrays.clone(data);
     }
 
     public byte[] getBytes()
     {
-        if (contents.length == 1)
+        if (0 == data.length)
         {
-            return ASN1OctetString.EMPTY_OCTETS;
+            return data;
         }
 
-        int padBits = contents[0] & 0xFF;
-        byte[] rv = Arrays.copyOfRange(contents, 1, contents.length);
+        byte[] rv = Arrays.clone(data);
         // DER requires pad bits be zero
-        rv[rv.length - 1] &= (byte)(0xFF << padBits);
+        rv[data.length - 1] &= (0xFF << padBits);
         return rv;
     }
 
     public int getPadBits()
     {
-        return contents[0] & 0xFF;
+        return padBits;
     }
 
     public String toString()
@@ -323,56 +226,85 @@ public abstract class ASN1BitString
 
     public int hashCode()
     {
-        if (contents.length < 2)
+        int end = data.length;
+        if (--end < 0)
         {
             return 1;
         }
 
-        int padBits = contents[0] & 0xFF;
-        int last = contents.length - 1;
+        byte der = (byte)(data[end] & (0xFF << padBits));
 
-        byte lastOctetDER = (byte)(contents[last] & (0xFF << padBits));
-
-        int hc = Arrays.hashCode(contents, 0, last);
+        int hc = Arrays.hashCode(data, 0, end);
         hc *= 257;
-        hc ^= lastOctetDER;
-        return hc;
+        hc ^= der;
+        return hc ^ padBits;
     }
 
-    boolean asn1Equals(ASN1Primitive other)
+    boolean asn1Equals(
+        ASN1Primitive o)
     {
-        if (!(other instanceof ASN1BitString))
+        if (!(o instanceof ASN1BitString))
         {
             return false;
         }
 
-        ASN1BitString that = (ASN1BitString)other;
-        byte[] thisContents = this.contents, thatContents = that.contents;
-
-        int length = thisContents.length;
-        if (thatContents.length != length)
+        ASN1BitString other = (ASN1BitString)o;
+        if (padBits != other.padBits)
         {
             return false;
         }
-        if (length == 1)
+        byte[] a = data, b = other.data;
+        int end = a.length;
+        if (end != b.length)
+        {
+            return false;
+        }
+        if (--end < 0)
         {
             return true;
         }
-
-        int last = length - 1;
-        for (int i = 0; i < last; ++i)
+        for (int i = 0; i < end; ++i)
         {
-            if (thisContents[i] != thatContents[i])
+            if (a[i] != b[i])
             {
                 return false;
             }
         }
 
-        int padBits = thisContents[0] & 0xFF;
-        byte thisLastOctetDER = (byte)(thisContents[last] & (0xFF << padBits));
-        byte thatLastOctetDER = (byte)(thatContents[last] & (0xFF << padBits));
+        byte derA = (byte)(a[end] & (0xFF << padBits));
+        byte derB = (byte)(b[end] & (0xFF << padBits));
 
-        return thisLastOctetDER == thatLastOctetDER;
+        return derA == derB;
+    }
+
+    static ASN1BitString fromInputStream(int length, InputStream stream)
+        throws IOException
+    {
+        if (length < 1)
+        {
+            throw new IllegalArgumentException("truncated BIT STRING detected");
+        }
+
+        int padBits = stream.read();
+        byte[] data = new byte[length - 1];
+
+        if (data.length != 0)
+        {
+            if (Streams.readFully(stream, data) != data.length)
+            {
+                throw new EOFException("EOF encountered in middle of BIT STRING");
+            }
+
+            if (padBits > 0 && padBits < 8)
+            {
+                if (data[data.length - 1] != (byte)(data[data.length - 1] & (0xFF << padBits)))
+                {
+                    return new DLBitString(data, padBits);
+                }
+            }
+        }
+
+        return new DERBitString(data, padBits);
     }
 
     public ASN1Primitive getLoadedObject()
@@ -382,37 +314,13 @@ public abstract class ASN1BitString
 
     ASN1Primitive toDERObject()
     {
-        return new DERBitString(contents, false);
+        return new DERBitString(data, padBits);
     }
 
     ASN1Primitive toDLObject()
     {
-        return new DLBitString(contents, false);
+        return new DLBitString(data, padBits);
     }
 
-    static ASN1BitString createPrimitive(byte[] contents)
-    {
-        int length = contents.length;
-        if (length < 1)
-        {
-            throw new IllegalArgumentException("truncated BIT STRING detected");
-        }
-
-        int padBits = contents[0] & 0xFF;
-        if (padBits > 0)
-        {
-            if (padBits > 7 || length < 2)
-            {
-                throw new IllegalArgumentException("invalid pad bits detected");
-            }
-
-            byte finalOctet = contents[length - 1];
-            if (finalOctet != (byte)(finalOctet & (0xFF << padBits)))
-            {
-                return new DLBitString(contents, false);
-            }
-        }
-
-        return new DERBitString(contents, false);
-    }
+    abstract void encode(ASN1OutputStream out, boolean withTag) throws IOException;
 }

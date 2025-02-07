@@ -5,8 +5,6 @@ import java.io.OutputStream;
 import java.security.Signature;
 import java.security.SignatureException;
 
-import org.bouncycastle.util.Exceptions;
-
 class SignatureUpdatingOutputStream
     extends OutputStream
 {
@@ -26,7 +24,7 @@ class SignatureUpdatingOutputStream
         }
         catch (SignatureException e)
         {
-            throw Exceptions.ioException(e.getMessage(), e);
+            throw new IOException(e.getMessage());
         }
     }
 
@@ -39,7 +37,7 @@ class SignatureUpdatingOutputStream
         }
         catch (SignatureException e)
         {
-            throw Exceptions.ioException(e.getMessage(), e);
+            throw new IOException(e.getMessage());
         }
     }
 
@@ -52,7 +50,7 @@ class SignatureUpdatingOutputStream
         }
         catch (SignatureException e)
         {
-            throw Exceptions.ioException(e.getMessage(), e);
+            throw new IOException(e.getMessage());
         }
     }
 }

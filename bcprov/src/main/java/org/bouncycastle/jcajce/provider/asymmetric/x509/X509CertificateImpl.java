@@ -31,17 +31,16 @@ import java.util.Set;
 
 import javax.security.auth.x500.X500Principal;
 
-import org.bouncycastle.asn1.ASN1BitString;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Encoding;
-import org.bouncycastle.asn1.ASN1IA5String;
 import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1String;
+import org.bouncycastle.asn1.DERBitString;
+import org.bouncycastle.asn1.DERIA5String;
 import org.bouncycastle.asn1.DERNull;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.misc.MiscObjectIdentifiers;
@@ -65,7 +64,6 @@ import org.bouncycastle.jcajce.util.JcaJceHelper;
 import org.bouncycastle.jce.X509Principal;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.Arrays;
-import org.bouncycastle.util.Exceptions;
 import org.bouncycastle.util.Integers;
 import org.bouncycastle.util.Properties;
 import org.bouncycastle.util.Strings;
@@ -80,6 +78,7 @@ abstract class X509CertificateImpl
     protected boolean[] keyUsage;
     protected String sigAlgName;
     protected byte[] sigAlgParams;
+
     X509CertificateImpl(JcaJceHelper bcHelper, org.bouncycastle.asn1.x509.Certificate c,
         BasicConstraints basicConstraints, boolean[] keyUsage, String sigAlgName, byte[] sigAlgParams)
     {
@@ -230,7 +229,7 @@ abstract class X509CertificateImpl
 
     public boolean[] getIssuerUniqueID()
     {
-        ASN1BitString    id = c.getTBSCertificate().getIssuerUniqueId();
+        DERBitString    id = c.getTBSCertificate().getIssuerUniqueId();
 
         if (id != null)
         {
@@ -250,7 +249,7 @@ abstract class X509CertificateImpl
 
     public boolean[] getSubjectUniqueID()
     {
-        ASN1BitString id = c.getTBSCertificate().getSubjectUniqueId();
+        DERBitString    id = c.getTBSCertificate().getSubjectUniqueId();
 
         if (id != null)
         {
@@ -298,21 +297,29 @@ abstract class X509CertificateImpl
             throw new CertificateParsingException("error processing extended key usage extension");
         }
     }
-
+    
     public int getBasicConstraints()
     {
-        if (basicConstraints == null || !basicConstraints.isCA())
+        if (basicConstraints != null)
         {
-            return -1;
+            if (basicConstraints.isCA())
+            {
+                if (basicConstraints.getPathLenConstraint() == null)
+                {
+                    return Integer.MAX_VALUE;
+                }
+                else
+                {
+                    return basicConstraints.getPathLenConstraint().intValue();
+                }
+            }
+            else
+            {
+                return -1;
+            }
         }
 
-        ASN1Integer pathLenConstraint = basicConstraints.getPathLenConstraintInteger();
-        if (pathLenConstraint == null)
-        {
-            return Integer.MAX_VALUE;
-        }
-
-        return pathLenConstraint.intPositiveValueExact();
+        return -1;
     }
 
     public Collection getSubjectAlternativeNames()
@@ -367,7 +374,7 @@ abstract class X509CertificateImpl
             }
             catch (Exception e)
             {
-                throw Exceptions.illegalStateException("error parsing " + e.getMessage(), e);
+                throw new IllegalStateException("error parsing " + e.toString());
             }
         }
 
@@ -453,7 +460,20 @@ abstract class X509CertificateImpl
         }
         catch (IOException e)
         {
-            throw Exceptions.illegalStateException("failed to recover public key: " + e.getMessage(), e);
+            return null;   // should never happen...
+        }
+    }
+
+    public byte[] getEncoded()
+        throws CertificateEncodingException
+    {
+        try
+        {
+            return c.getEncoded(ASN1Encoding.DER);
+        }
+        catch (IOException e)
+        {
+            throw new CertificateEncodingException(e.toString());
         }
     }
 
@@ -506,15 +526,15 @@ abstract class X509CertificateImpl
                         }
                         else if (oid.equals(MiscObjectIdentifiers.netscapeCertType))
                         {
-                            buf.append(new NetscapeCertType(ASN1BitString.getInstance(dIn.readObject()))).append(nl);
+                            buf.append(new NetscapeCertType(DERBitString.getInstance(dIn.readObject()))).append(nl);
                         }
                         else if (oid.equals(MiscObjectIdentifiers.netscapeRevocationURL))
                         {
-                            buf.append(new NetscapeRevocationURL(ASN1IA5String.getInstance(dIn.readObject()))).append(nl);
+                            buf.append(new NetscapeRevocationURL(DERIA5String.getInstance(dIn.readObject()))).append(nl);
                         }
                         else if (oid.equals(MiscObjectIdentifiers.verisignCzagExtension))
                         {
-                            buf.append(new VerisignCzagExtension(ASN1IA5String.getInstance(dIn.readObject()))).append(nl);
+                            buf.append(new VerisignCzagExtension(DERIA5String.getInstance(dIn.readObject()))).append(nl);
                         }
                         else 
                         {
@@ -626,7 +646,7 @@ abstract class X509CertificateImpl
         {
             List<PublicKey> pubKeys = ((CompositePublicKey)key).getPublicKeys();
             ASN1Sequence keySeq = ASN1Sequence.getInstance(c.getSignatureAlgorithm().getParameters());
-            ASN1Sequence sigSeq = ASN1Sequence.getInstance(ASN1BitString.getInstance(c.getSignature()).getBytes());
+            ASN1Sequence sigSeq = ASN1Sequence.getInstance(DERBitString.getInstance(c.getSignature()).getBytes());
 
             boolean success = false;
             for (int i = 0; i != pubKeys.size(); i++)
@@ -647,7 +667,7 @@ abstract class X509CertificateImpl
                     checkSignature(
                         (PublicKey)pubKeys.get(i), signature,
                         sigAlg.getParameters(),
-                        ASN1BitString.getInstance(sigSeq.getObjectAt(i)).getBytes());
+                        DERBitString.getInstance(sigSeq.getObjectAt(i)).getBytes());
                     success = true;
                 }
                 catch (SignatureException e)
@@ -669,7 +689,7 @@ abstract class X509CertificateImpl
         else if (X509SignatureUtil.isCompositeAlgorithm(c.getSignatureAlgorithm()))
         {
             ASN1Sequence keySeq = ASN1Sequence.getInstance(c.getSignatureAlgorithm().getParameters());
-            ASN1Sequence sigSeq = ASN1Sequence.getInstance(ASN1BitString.getInstance(c.getSignature()).getBytes());
+            ASN1Sequence sigSeq = ASN1Sequence.getInstance(DERBitString.getInstance(c.getSignature()).getBytes());
 
             boolean success = false;
             for (int i = 0; i != sigSeq.size(); i++)
@@ -686,7 +706,7 @@ abstract class X509CertificateImpl
                     checkSignature(
                         key, signature,
                         sigAlg.getParameters(),
-                        ASN1BitString.getInstance(sigSeq.getObjectAt(i)).getBytes());
+                        DERBitString.getInstance(sigSeq.getObjectAt(i)).getBytes());
 
                     success = true;
                 }

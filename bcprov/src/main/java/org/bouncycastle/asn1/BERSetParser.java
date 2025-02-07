@@ -4,8 +4,6 @@ import java.io.IOException;
 
 /**
  * Parser for indefinite-length SETs.
- * 
- * @deprecated Check for 'ASN1SetParser' instead 
  */
 public class BERSetParser
     implements ASN1SetParser
@@ -38,7 +36,7 @@ public class BERSetParser
     public ASN1Primitive getLoadedObject()
         throws IOException
     {
-        return parse(_parser);
+        return new BERSet(_parser.readVector());
     }
 
     /**
@@ -56,10 +54,5 @@ public class BERSetParser
         {
             throw new ASN1ParsingException(e.getMessage(), e);
         }
-    }
-
-    static BERSet parse(ASN1StreamParser sp) throws IOException
-    {
-        return new BERSet(sp.readVector());
     }
 }

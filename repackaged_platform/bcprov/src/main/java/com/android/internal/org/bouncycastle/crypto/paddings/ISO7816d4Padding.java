@@ -62,20 +62,18 @@ public class ISO7816d4Padding
     public int padCount(byte[] in)
         throws InvalidCipherTextException
     {
-        int position = -1, still00Mask = -1;
-        int i = in.length;
-        while (--i >= 0)
+        int count = in.length - 1;
+
+        while (count > 0 && in[count] == 0)
         {
-            int next = in[i] & 0xFF;
-            int match00Mask = ((next ^ 0x00) - 1) >> 31;
-            int match80Mask = ((next ^ 0x80) - 1) >> 31;
-            position ^= (i ^ position) & (still00Mask & match80Mask);
-            still00Mask &= match00Mask;
+            count--;
         }
-        if (position < 0)
+
+        if (in[count] != (byte)0x80)
         {
             throw new InvalidCipherTextException("pad block corrupted");
         }
-        return in.length - position;
+        
+        return in.length - count;
     }
 }

@@ -1,7 +1,6 @@
 /* GENERATED SOURCE. DO NOT MODIFY. */
 package com.android.org.bouncycastle.asn1.misc;
 
-import com.android.org.bouncycastle.asn1.ASN1IA5String;
 import com.android.org.bouncycastle.asn1.DERIA5String;
 
 /**
@@ -11,7 +10,7 @@ public class VerisignCzagExtension
     extends DERIA5String
 {
     public VerisignCzagExtension(
-        ASN1IA5String str)
+        DERIA5String str)
     {
         super(str.getString());
     }

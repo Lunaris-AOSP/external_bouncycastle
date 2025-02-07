@@ -96,32 +96,23 @@ public class BEROctetStringGenerator
 
         public void write(byte[] b, int off, int len) throws IOException
         {
-            int bufLen = _buf.length;
-            int available = bufLen - _off;
-            if (len < available)
+            while (len > 0)
             {
-                System.arraycopy(b, off, _buf, _off, len);
-                _off += len;
-                return;
-            }
+                int numToCopy = Math.min(len, _buf.length - _off);
+                System.arraycopy(b, off, _buf, _off, numToCopy);
 
-            int count = 0;
-            if (_off > 0)
-            {
-                System.arraycopy(b, off, _buf, _off, available);
-                count += available;
-                DEROctetString.encode(_derOut, true, _buf, 0, bufLen);
-            }
+                _off += numToCopy;
+                if (_off < _buf.length)
+                {
+                    break;
+                }
 
-            int remaining;
-            while ((remaining = (len - count)) >= bufLen)
-            {
-                DEROctetString.encode(_derOut, true, b, off + count, bufLen);
-                count += bufLen;
-            }
+                DEROctetString.encode(_derOut, true, _buf, 0, _buf.length);
+                _off = 0;
 
-            System.arraycopy(b, off + count, _buf, 0, remaining);
-            this._off = remaining;
+                off += numToCopy;
+                len -= numToCopy;
+            }
         }
 
         public void close()

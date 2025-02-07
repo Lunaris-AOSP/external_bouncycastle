@@ -6,13 +6,13 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.bouncycastle.asn1.ASN1BitString;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DEROctetString;
 // Android-removed: Unsupported algorithms
 // import org.bouncycastle.asn1.cryptopro.CryptoProObjectIdentifiers;
@@ -113,14 +113,6 @@ public class PublicKeyFactory
     public static AsymmetricKeyParameter createKey(byte[] keyInfoData)
         throws IOException
     {
-        if (keyInfoData == null)
-        {
-            throw new IllegalArgumentException("keyInfoData array null");
-        }
-        if (keyInfoData.length == 0)
-        {
-            throw new IllegalArgumentException("keyInfoData array empty");
-        }
         return createKey(SubjectPublicKeyInfo.getInstance(ASN1Primitive.fromByteArray(keyInfoData)));
     }
 
@@ -147,10 +139,6 @@ public class PublicKeyFactory
     public static AsymmetricKeyParameter createKey(SubjectPublicKeyInfo keyInfo)
         throws IOException
     {
-        if (keyInfo == null)
-        {
-            throw new IllegalArgumentException("keyInfo argument null");
-        }
         return createKey(keyInfo, null);
     }
 
@@ -165,11 +153,6 @@ public class PublicKeyFactory
     public static AsymmetricKeyParameter createKey(SubjectPublicKeyInfo keyInfo, Object defaultParams)
         throws IOException
     {
-        if (keyInfo == null)
-        {
-            throw new IllegalArgumentException("keyInfo argument null");
-        }
-
         AlgorithmIdentifier algID = keyInfo.getAlgorithm();
 
         SubjectPublicKeyInfoConverter converter = (SubjectPublicKeyInfoConverter)converters.get(algID.getAlgorithm());
@@ -321,7 +304,7 @@ public class PublicKeyFactory
                 dParams = new ECDomainParameters(x9);
             }
 
-            ASN1BitString bits = keyInfo.getPublicKeyData();
+            DERBitString bits = keyInfo.getPublicKeyData();
             byte[] data = bits.getBytes();
             ASN1OctetString key = new DEROctetString(data);
 
@@ -498,7 +481,7 @@ public class PublicKeyFactory
                 }
                 BigInteger b = new BigInteger(1, b_bytes);
                 DSTU4145BinaryField field = binary.getField();
-                ECCurve curve = new ECCurve.F2m(field.getM(), field.getK1(), field.getK2(), field.getK3(), binary.getA(), b, null, null);
+                ECCurve curve = new ECCurve.F2m(field.getM(), field.getK1(), field.getK2(), field.getK3(), binary.getA(), b);
                 byte[] g_bytes = binary.getG();
                 if (algOid.equals(UAObjectIdentifiers.dstu4145le))
                 {
@@ -531,7 +514,7 @@ public class PublicKeyFactory
     {
         AsymmetricKeyParameter getPublicKeyParameters(SubjectPublicKeyInfo keyInfo, Object defaultParams)
         {
-            return new X25519PublicKeyParameters(getRawKey(keyInfo, defaultParams));
+            return new X25519PublicKeyParameters(getRawKey(keyInfo, defaultParams, X25519PublicKeyParameters.KEY_SIZE), 0);
         }
     }
 
@@ -540,7 +523,7 @@ public class PublicKeyFactory
     {
         AsymmetricKeyParameter getPublicKeyParameters(SubjectPublicKeyInfo keyInfo, Object defaultParams)
         {
-            return new X448PublicKeyParameters(getRawKey(keyInfo, defaultParams));
+            return new X448PublicKeyParameters(getRawKey(keyInfo, defaultParams, X448PublicKeyParameters.KEY_SIZE), 0);
         }
     }
 
@@ -549,7 +532,7 @@ public class PublicKeyFactory
     {
         AsymmetricKeyParameter getPublicKeyParameters(SubjectPublicKeyInfo keyInfo, Object defaultParams)
         {
-            return new Ed25519PublicKeyParameters(getRawKey(keyInfo, defaultParams));
+            return new Ed25519PublicKeyParameters(getRawKey(keyInfo, defaultParams, Ed25519PublicKeyParameters.KEY_SIZE), 0);
         }
     }
 
@@ -558,19 +541,24 @@ public class PublicKeyFactory
     {
         AsymmetricKeyParameter getPublicKeyParameters(SubjectPublicKeyInfo keyInfo, Object defaultParams)
         {
-            return new Ed448PublicKeyParameters(getRawKey(keyInfo, defaultParams));
+            return new Ed448PublicKeyParameters(getRawKey(keyInfo, defaultParams, Ed448PublicKeyParameters.KEY_SIZE), 0);
         }
     }
     */
     // END Android-removed: Unsupported algorithms
 
-    private static byte[] getRawKey(SubjectPublicKeyInfo keyInfo, Object defaultParams)
+    private static byte[] getRawKey(SubjectPublicKeyInfo keyInfo, Object defaultParams, int expectedSize)
     {
         /*
          * TODO[RFC 8422]
          * - Require defaultParams == null?
          * - Require keyInfo.getAlgorithm().getParameters() == null?
          */
-        return keyInfo.getPublicKeyData().getOctets();
+        byte[] result = keyInfo.getPublicKeyData().getOctets();
+        if (expectedSize != result.length)
+        {
+            throw new RuntimeException("public key encoding has incorrect length");
+        }
+        return result;
     }
 }

@@ -9,9 +9,9 @@ import java.security.spec.ECPoint;
 import java.security.spec.ECPublicKeySpec;
 import java.security.spec.EllipticCurve;
 
-import org.bouncycastle.asn1.ASN1BitString;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
@@ -28,7 +28,6 @@ import org.bouncycastle.jcajce.provider.config.ProviderConfiguration;
 import org.bouncycastle.jce.interfaces.ECPointEncoder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.math.ec.ECCurve;
-import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.Properties;
 
 public class BCECPublicKey
@@ -42,8 +41,6 @@ public class BCECPublicKey
     private transient ECPublicKeyParameters   ecPublicKey;
     private transient ECParameterSpec         ecSpec;
     private transient ProviderConfiguration   configuration;
-    private transient byte[]                  encoding;
-    private transient boolean                 oldPcSet;
 
     public BCECPublicKey(
         String algorithm,
@@ -196,7 +193,7 @@ public class BCECPublicKey
         ECCurve curve = EC5Util.getCurve(configuration, params);
         ecSpec = EC5Util.convertToSpec(params, curve);
 
-        ASN1BitString   bits = info.getPublicKeyData();
+        DERBitString    bits = info.getPublicKeyData();
         byte[]          data = bits.getBytes();
         ASN1OctetString key = new DEROctetString(data);
 
@@ -238,23 +235,16 @@ public class BCECPublicKey
 
     public byte[] getEncoded()
     {
-        boolean pcSet = Properties.isOverrideSet("org.bouncycastle.ec.enable_pc");
-        if (encoding == null || oldPcSet != pcSet)
-        {
-            boolean compress = withCompression || pcSet;
+        boolean compress = withCompression || Properties.isOverrideSet("org.bouncycastle.ec.enable_pc");
 
-            AlgorithmIdentifier algId = new AlgorithmIdentifier(
-                X9ObjectIdentifiers.id_ecPublicKey,
-                ECUtils.getDomainParametersFromName(ecSpec, compress));
+        AlgorithmIdentifier algId = new AlgorithmIdentifier(
+            X9ObjectIdentifiers.id_ecPublicKey,
+            ECUtils.getDomainParametersFromName(ecSpec, compress));
 
-            byte[] pubKeyOctets = ecPublicKey.getQ().getEncoded(compress);
+        byte[] pubKeyOctets = ecPublicKey.getQ().getEncoded(compress);
 
-            // stored curve is null if ImplicitlyCa
-            encoding = KeyUtil.getEncodedSubjectPublicKeyInfo(algId, pubKeyOctets);
-            oldPcSet = pcSet;
-        }
-
-        return Arrays.clone(encoding);
+        // stored curve is null if ImplicitlyCa
+        return KeyUtil.getEncodedSubjectPublicKeyInfo(algId, pubKeyOctets);
     }
 
     public ECParameterSpec getParams()
@@ -312,26 +302,18 @@ public class BCECPublicKey
     public void setPointFormat(String style)
     {
        withCompression = !("UNCOMPRESSED".equalsIgnoreCase(style));
-       encoding = null;
     }
 
     public boolean equals(Object o)
     {
-        if (o instanceof BCECPublicKey)
+        if (!(o instanceof BCECPublicKey))
         {
-            BCECPublicKey other = (BCECPublicKey)o;
-
-            return ecPublicKey.getQ().equals(other.ecPublicKey.getQ()) && (engineGetSpec().equals(other.engineGetSpec()));
+            return false;
         }
 
-        if (o instanceof ECPublicKey)
-        {
-            ECPublicKey other = (ECPublicKey)o;
+        BCECPublicKey other = (BCECPublicKey)o;
 
-            return Arrays.areEqual(getEncoded(), other.getEncoded());
-        }
-
-        return false;
+        return ecPublicKey.getQ().equals(other.ecPublicKey.getQ()) && (engineGetSpec().equals(other.engineGetSpec()));
     }
 
     public int hashCode()

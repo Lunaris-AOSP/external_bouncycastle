@@ -16,7 +16,6 @@ import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.asn1.ASN1UTCTime;
 import org.bouncycastle.asn1.DERGeneralizedTime;
 import org.bouncycastle.asn1.DERUTCTime;
-import org.bouncycastle.asn1.LocaleUtil;
 
 public class Time
     extends ASN1Object
@@ -28,12 +27,7 @@ public class Time
         ASN1TaggedObject obj,
         boolean          explicit)
     {
-        if (!explicit)
-        {
-            throw new IllegalArgumentException("choice item must be explicitly tagged");
-        }
-
-        return getInstance(obj.getExplicitBaseObject());
+        return getInstance(obj.getObject()); // must be explicitly tagged
     }
 
     public Time(

@@ -85,7 +85,7 @@ public class JcaSignerInfoVerifierBuilder
         return new SignerInformationVerifier(sigAlgNameGen, sigAlgIDFinder, helper.createContentVerifierProvider(pubKey), digestProvider);
     }
 
-    private static class Helper
+    private class Helper
     {
         ContentVerifierProvider createContentVerifierProvider(PublicKey publicKey)
             throws OperatorCreationException
@@ -112,7 +112,7 @@ public class JcaSignerInfoVerifierBuilder
         }
     }
 
-    private static class NamedHelper
+    private class NamedHelper
         extends Helper
     {
         private final String providerName;
@@ -147,7 +147,7 @@ public class JcaSignerInfoVerifierBuilder
         }
     }
 
-    private static class ProviderHelper
+    private class ProviderHelper
         extends Helper
     {
         private final Provider provider;

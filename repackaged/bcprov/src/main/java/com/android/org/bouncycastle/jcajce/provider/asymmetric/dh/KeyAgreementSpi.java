@@ -41,7 +41,6 @@ import com.android.org.bouncycastle.jcajce.spec.DHDomainParameterSpec;
 // import org.bouncycastle.jcajce.spec.DHUParameterSpec;
 // import org.bouncycastle.jcajce.spec.MQVParameterSpec;
 import com.android.org.bouncycastle.jcajce.spec.UserKeyingMaterialSpec;
-import com.android.org.bouncycastle.util.BigIntegers;
 
 /**
  * Diffie-Hellman key agreement. There's actually a better way of doing this
@@ -118,9 +117,30 @@ public class KeyAgreementSpi
         //
         int expectedLength = (p.bitLength() + 7) / 8;
 
-        return BigIntegers.asUnsignedByteArray(expectedLength, r);
-    }
+        byte[]    tmp = r.toByteArray();
 
+        if (tmp.length == expectedLength)
+        {
+            return tmp;
+        }
+
+        if (tmp[0] == 0 && tmp.length == expectedLength + 1)
+        {
+            byte[]    rv = new byte[tmp.length - 1];
+            
+            System.arraycopy(tmp, 1, rv, 0, rv.length);
+            return rv;
+        }
+
+        // tmp must be shorter than expectedLength
+        // pad to the left with zeros.
+        byte[]    rv = new byte[expectedLength];
+
+        System.arraycopy(tmp, 0, rv, rv.length - tmp.length, tmp.length);
+
+        return rv;
+    }
+    
     protected Key engineDoPhase(
         Key     key,
         boolean lastPhase) 
@@ -248,7 +268,7 @@ public class KeyAgreementSpi
         return super.engineGenerateSecret(algorithm);
     }
 
-    protected void doInitFromKey(
+    protected void engineInit(
         Key                     key,
         AlgorithmParameterSpec  params,
         SecureRandom            random) 
@@ -367,7 +387,7 @@ public class KeyAgreementSpi
         this.result = bigIntToBytes(x);
     }
 
-    protected byte[] doCalcSecret()
+    protected byte[] calcSecret()
     {
         return result;
     }

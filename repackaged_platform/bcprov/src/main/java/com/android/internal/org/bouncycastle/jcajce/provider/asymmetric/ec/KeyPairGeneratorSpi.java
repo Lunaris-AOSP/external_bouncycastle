@@ -9,7 +9,10 @@ import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Hashtable;
+import java.util.Map;
 
+import com.android.internal.org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import com.android.internal.org.bouncycastle.asn1.x9.ECNamedCurveTable;
 import com.android.internal.org.bouncycastle.asn1.x9.X9ECParameters;
 import com.android.internal.org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import com.android.internal.org.bouncycastle.crypto.CryptoServicesRegistrar;
@@ -60,8 +63,7 @@ public abstract class KeyPairGeneratorSpi
 
         static private Hashtable    ecParameters;
 
-        static
-        {
+        static {
             ecParameters = new Hashtable();
 
             ecParameters.put(Integers.valueOf(192), new ECGenParameterSpec("prime192v1")); // a.k.a P-192
@@ -218,12 +220,13 @@ public abstract class KeyPairGeneratorSpi
         {
             if (p instanceof ECNamedCurveSpec)
             {
-                String curveName = ((ECNamedCurveSpec)p).getName();
+                X9ECParameters x9P = ECUtils.getDomainParametersFromName(((ECNamedCurveSpec)p).getName());
 
-                X9ECParameters x9 = ECUtils.getDomainParametersFromName(curveName, configuration);
-                if (null != x9)
+                if (x9P != null)
                 {
-                    return createKeyGenParamsJCE(x9, r);
+                    ECDomainParameters dp = new ECDomainParameters(x9P.getCurve(), x9P.getG(), x9P.getN(), x9P.getH());
+
+                    return new ECKeyGenerationParameters(dp, r);
                 }
             }
 
@@ -235,27 +238,48 @@ public abstract class KeyPairGeneratorSpi
             return new ECKeyGenerationParameters(dp, r);
         }
 
-        protected ECKeyGenerationParameters createKeyGenParamsJCE(X9ECParameters x9, SecureRandom r)
-        {
-            ECDomainParameters dp = new ECDomainParameters(x9.getCurve(), x9.getG(), x9.getN(), x9.getH());
-
-            return new ECKeyGenerationParameters(dp, r);
-        }
-
-        protected void initializeNamedCurve(String curveName, SecureRandom random)
+        protected ECNamedCurveSpec createNamedCurveSpec(String curveName)
             throws InvalidAlgorithmParameterException
         {
-            X9ECParameters x9 = ECUtils.getDomainParametersFromName(curveName, configuration);
-            if (null == x9)
+            // NOTE: Don't bother with custom curves here as the curve will be converted to JCE type shortly
+
+            X9ECParameters p = ECUtils.getDomainParametersFromName(curveName);
+            if (p == null)
             {
-                throw new InvalidAlgorithmParameterException("unknown curve name: " + curveName);
+                try
+                {
+                    // Check whether it's actually an OID string (SunJSSE ServerHandshaker setupEphemeralECDHKeys bug)
+                    p = ECNamedCurveTable.getByOID(new ASN1ObjectIdentifier(curveName));
+                    if (p == null)
+                    {
+                        Map extraCurves = configuration.getAdditionalECParameters();
+
+                        p = (X9ECParameters)extraCurves.get(new ASN1ObjectIdentifier(curveName));
+
+                        if (p == null)
+                        {
+                            throw new InvalidAlgorithmParameterException("unknown curve OID: " + curveName);
+                        }
+                    }
+                }
+                catch (IllegalArgumentException ex)
+                {
+                    throw new InvalidAlgorithmParameterException("unknown curve name: " + curveName);
+                }
             }
 
             // Work-around for JDK bug -- it won't look up named curves properly if seed is present
             byte[] seed = null; //p.getSeed();
 
-            this.ecParams = new ECNamedCurveSpec(curveName, x9.getCurve(), x9.getG(), x9.getN(), x9.getH(), seed);
-            this.param = createKeyGenParamsJCE(x9, random);
+            return new ECNamedCurveSpec(curveName, p.getCurve(), p.getG(), p.getN(), p.getH(), seed);
+        }
+
+        protected void initializeNamedCurve(String curveName, SecureRandom random)
+            throws InvalidAlgorithmParameterException
+        {
+            ECNamedCurveSpec namedCurve = createNamedCurveSpec(curveName);
+            this.ecParams = namedCurve;
+            this.param = createKeyGenParamsJCE(namedCurve, random);
         }
     }
 

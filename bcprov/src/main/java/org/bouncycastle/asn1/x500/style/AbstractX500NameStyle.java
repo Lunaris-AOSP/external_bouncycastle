@@ -131,22 +131,19 @@ public abstract class AbstractX500NameStyle
 
     public boolean areEqual(X500Name name1, X500Name name2)
     {
-        if (name1.size() != name2.size())
+        RDN[] rdns1 = name1.getRDNs();
+        RDN[] rdns2 = name2.getRDNs();
+
+        if (rdns1.length != rdns2.length)
         {
             return false;
         }
 
-        RDN[] rdns1 = name1.getRDNs();
-        RDN[] rdns2 = name2.getRDNs();
-
         boolean reverse = false;
 
-        AttributeTypeAndValue first1 = rdns1[0].getFirst();
-        AttributeTypeAndValue first2 = rdns2[0].getFirst();
-
-        if (first1 != null && first2 != null)
+        if (rdns1[0].getFirst() != null && rdns2[0].getFirst() != null)
         {
-            reverse = !first1.getType().equals(first2.getType());  // guess forward
+            reverse = !rdns1[0].getFirst().getType().equals(rdns2[0].getFirst().getType());  // guess forward
         }
 
         for (int i = 0; i != rdns1.length; i++)

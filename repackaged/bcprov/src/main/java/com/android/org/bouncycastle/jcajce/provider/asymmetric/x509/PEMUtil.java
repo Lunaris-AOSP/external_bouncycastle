@@ -14,7 +14,7 @@ class PEMUtil
      * current PEM object.
      *
      */
-    private static class Boundaries
+    private class Boundaries
     {
         private final String _header;
         private final String _footer;
@@ -113,8 +113,7 @@ class PEMUtil
     }
 
     ASN1Sequence readPEMObject(
-        InputStream in,
-        boolean     isFirst)
+        InputStream in)
         throws IOException
     {
         String line;
@@ -133,11 +132,6 @@ class PEMUtil
 
         if (header == null)
         {
-            if (!isFirst)
-            {
-                // just ignore the data
-                return null;
-            }
             throw new IOException("malformed PEM data: no header found");
         }
 

@@ -1,16 +1,19 @@
 /* GENERATED SOURCE. DO NOT MODIFY. */
 package com.android.internal.org.bouncycastle.asn1.x509;
 
-import com.android.internal.org.bouncycastle.asn1.ASN1BitString;
+import java.math.BigInteger;
+
 import com.android.internal.org.bouncycastle.asn1.ASN1EncodableVector;
 import com.android.internal.org.bouncycastle.asn1.ASN1Integer;
 import com.android.internal.org.bouncycastle.asn1.ASN1Object;
 import com.android.internal.org.bouncycastle.asn1.ASN1Primitive;
 import com.android.internal.org.bouncycastle.asn1.ASN1Sequence;
 import com.android.internal.org.bouncycastle.asn1.ASN1TaggedObject;
+import com.android.internal.org.bouncycastle.asn1.DERBitString;
 import com.android.internal.org.bouncycastle.asn1.DERSequence;
 import com.android.internal.org.bouncycastle.asn1.DERTaggedObject;
 import com.android.internal.org.bouncycastle.asn1.x500.X500Name;
+import com.android.internal.org.bouncycastle.util.BigIntegers;
 import com.android.internal.org.bouncycastle.util.Properties;
 
 /**
@@ -46,8 +49,8 @@ public class TBSCertificate
     Time                    startDate, endDate;
     X500Name                subject;
     SubjectPublicKeyInfo    subjectPublicKeyInfo;
-    ASN1BitString           issuerUniqueId;
-    ASN1BitString           subjectUniqueId;
+    DERBitString            issuerUniqueId;
+    DERBitString            subjectUniqueId;
     Extensions              extensions;
 
     public static TBSCertificate getInstance(
@@ -95,15 +98,15 @@ public class TBSCertificate
         boolean isV1 = false;
         boolean isV2 = false;
  
-        if (version.hasValue(0))
+        if (version.hasValue(BigInteger.valueOf(0)))
         {
             isV1 = true;
         }
-        else if (version.hasValue(1))
+        else if (version.hasValue(BigInteger.valueOf(1)))
         {
             isV2 = true;
         }
-        else if (!version.hasValue(2))
+        else if (!version.hasValue(BigInteger.valueOf(2)))
         {
             throw new IllegalArgumentException("version number not recognised");
         }
@@ -141,10 +144,10 @@ public class TBSCertificate
             switch (extra.getTagNo())
             {
             case 1:
-                issuerUniqueId = ASN1BitString.getInstance(extra, false);
+                issuerUniqueId = DERBitString.getInstance(extra, false);
                 break;
             case 2:
-                subjectUniqueId = ASN1BitString.getInstance(extra, false);
+                subjectUniqueId = DERBitString.getInstance(extra, false);
                 break;
             case 3:
                 if (isV2)
@@ -205,12 +208,12 @@ public class TBSCertificate
         return subjectPublicKeyInfo;
     }
 
-    public ASN1BitString getIssuerUniqueId()
+    public DERBitString getIssuerUniqueId()
     {
         return issuerUniqueId;
     }
 
-    public ASN1BitString getSubjectUniqueId()
+    public DERBitString getSubjectUniqueId()
     {
         return subjectUniqueId;
     }
@@ -237,7 +240,7 @@ public class TBSCertificate
         ASN1EncodableVector v = new ASN1EncodableVector();
 
         // DEFAULT Zero
-        if (!version.hasValue(0))
+        if (!version.hasValue(BigIntegers.ZERO))
         {
             v.add(new DERTaggedObject(true, 0, version));
         }

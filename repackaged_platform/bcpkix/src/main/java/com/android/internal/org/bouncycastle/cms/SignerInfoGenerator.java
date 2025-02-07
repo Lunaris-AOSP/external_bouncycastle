@@ -20,7 +20,11 @@ import com.android.internal.org.bouncycastle.asn1.cms.SignerInfo;
 import com.android.internal.org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import com.android.internal.org.bouncycastle.cert.X509CertificateHolder;
 import com.android.internal.org.bouncycastle.operator.ContentSigner;
+import com.android.internal.org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
+import com.android.internal.org.bouncycastle.operator.DigestAlgorithmIdentifierFinder;
 import com.android.internal.org.bouncycastle.operator.DigestCalculator;
+import com.android.internal.org.bouncycastle.operator.DigestCalculatorProvider;
+import com.android.internal.org.bouncycastle.operator.OperatorCreationException;
 import com.android.internal.org.bouncycastle.util.Arrays;
 import com.android.internal.org.bouncycastle.util.io.TeeOutputStream;
 
@@ -34,7 +38,7 @@ public class SignerInfoGenerator
     private final CMSAttributeTableGenerator unsAttrGen;
     private final ContentSigner signer;
     private final DigestCalculator digester;
-    private final AlgorithmIdentifier digestAlgorithm;
+    private final DigestAlgorithmIdentifierFinder digAlgFinder = new DefaultDigestAlgorithmIdentifierFinder();
     private final CMSSignatureEncryptionAlgorithmFinder sigEncAlgFinder;
 
     private byte[] calculatedDigest = null;
@@ -43,32 +47,44 @@ public class SignerInfoGenerator
     SignerInfoGenerator(
         SignerIdentifier signerIdentifier,
         ContentSigner signer,
-        AlgorithmIdentifier digesterAlgorithm,
+        DigestCalculatorProvider digesterProvider,
         CMSSignatureEncryptionAlgorithmFinder sigEncAlgFinder)
+        throws OperatorCreationException
     {
-        this.signerIdentifier = signerIdentifier;
-        this.signer = signer;
-        this.digestAlgorithm = digesterAlgorithm;
-        this.digester = null;
-        this.sAttrGen = null;
-        this.unsAttrGen = null;
-        this.sigEncAlgFinder = sigEncAlgFinder;
+        this(signerIdentifier, signer, digesterProvider, sigEncAlgFinder, false);
     }
 
     SignerInfoGenerator(
         SignerIdentifier signerIdentifier,
         ContentSigner signer,
-        DigestCalculator digester,
+        DigestCalculatorProvider digesterProvider,
         CMSSignatureEncryptionAlgorithmFinder sigEncAlgFinder,
-        CMSAttributeTableGenerator sAttrGen,
-        CMSAttributeTableGenerator unsAttrGen)
+        boolean isDirectSignature)
+        throws OperatorCreationException
     {
         this.signerIdentifier = signerIdentifier;
         this.signer = signer;
-        this.digestAlgorithm = digester.getAlgorithmIdentifier();
-        this.digester = digester;
-        this.sAttrGen = sAttrGen;
-        this.unsAttrGen = unsAttrGen;
+
+        if (digesterProvider != null)
+        {
+            this.digester = digesterProvider.get(digAlgFinder.find(signer.getAlgorithmIdentifier()));
+        }
+        else
+        {
+            this.digester = null;
+        }
+
+        if (isDirectSignature)
+        {
+            this.sAttrGen = null;
+            this.unsAttrGen = null;
+        }
+        else
+        {
+            this.sAttrGen = new DefaultSignedAttributeTableGenerator();
+            this.unsAttrGen = null;
+        }
+
         this.sigEncAlgFinder = sigEncAlgFinder;
     }
 
@@ -79,11 +95,36 @@ public class SignerInfoGenerator
     {
         this.signerIdentifier = original.signerIdentifier;
         this.signer = original.signer;
-        this.digestAlgorithm = original.digestAlgorithm;
         this.digester = original.digester;
         this.sigEncAlgFinder = original.sigEncAlgFinder;
         this.sAttrGen = sAttrGen;
         this.unsAttrGen = unsAttrGen;
+    }
+
+    SignerInfoGenerator(
+        SignerIdentifier signerIdentifier,
+        ContentSigner signer,
+        DigestCalculatorProvider digesterProvider,
+        CMSSignatureEncryptionAlgorithmFinder sigEncAlgFinder,
+        CMSAttributeTableGenerator sAttrGen,
+        CMSAttributeTableGenerator unsAttrGen)
+        throws OperatorCreationException
+    {
+        this.signerIdentifier = signerIdentifier;
+        this.signer = signer;
+
+        if (digesterProvider != null)
+        {
+            this.digester = digesterProvider.get(digAlgFinder.find(signer.getAlgorithmIdentifier()));
+        }
+        else
+        {
+            this.digester = null;
+        }
+
+        this.sAttrGen = sAttrGen;
+        this.unsAttrGen = unsAttrGen;
+        this.sigEncAlgFinder = sigEncAlgFinder;
     }
 
     public SignerIdentifier getSID()
@@ -108,7 +149,12 @@ public class SignerInfoGenerator
     
     public AlgorithmIdentifier getDigestAlgorithm()
     {
-        return digestAlgorithm;
+        if (digester != null)
+        {
+            return digester.getAlgorithmIdentifier();
+        }
+
+        return digAlgFinder.find(signer.getAlgorithmIdentifier());
     }
     
     public OutputStream getCalculatingOutputStream()
@@ -165,13 +211,14 @@ public class SignerInfoGenerator
             }
             else
             {
-                digestAlg = digestAlgorithm;
                 if (digester != null)
                 {
+                    digestAlg = digester.getAlgorithmIdentifier();
                     calculatedDigest = digester.getDigest();
                 }
                 else
                 {
+                    digestAlg = digAlgFinder.find(signer.getAlgorithmIdentifier());
                     calculatedDigest = null;
                 }
             }

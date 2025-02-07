@@ -44,42 +44,22 @@ public class BERSequence
         super(elements);
     }
 
-    int encodedLength(boolean withTag) throws IOException
+    int encodedLength() throws IOException
     {
-        int totalLength = withTag ? 4 : 3;
+        int count = elements.length;
+        int totalLength = 0;
 
-        for (int i = 0, count = elements.length; i < count; ++i)
+        for (int i = 0; i < count; ++i)
         {
             ASN1Primitive p = elements[i].toASN1Primitive();
-            totalLength += p.encodedLength(true);
+            totalLength += p.encodedLength();
         }
 
-        return totalLength;
+        return 2 + totalLength + 2;
     }
 
     void encode(ASN1OutputStream out, boolean withTag) throws IOException
     {
-        out.writeEncodingIL(withTag, BERTags.CONSTRUCTED | BERTags.SEQUENCE, elements);
-    }
-
-    ASN1BitString toASN1BitString()
-    {
-        return new BERBitString(getConstructedBitStrings());
-    }
-
-    ASN1External toASN1External()
-    {
-        // TODO There is currently no BERExternal class
-        return ((ASN1Sequence)toDLObject()).toASN1External();
-    }
-
-    ASN1OctetString toASN1OctetString()
-    {
-        return new BEROctetString(getConstructedOctetStrings());
-    }
-
-    ASN1Set toASN1Set()
-    {
-        return new BERSet(false, toArrayInternal());
+        out.writeEncodedIndef(withTag, BERTags.SEQUENCE | BERTags.CONSTRUCTED, elements);
     }
 }

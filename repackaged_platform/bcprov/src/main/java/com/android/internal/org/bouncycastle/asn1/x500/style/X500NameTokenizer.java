@@ -10,78 +10,83 @@ package com.android.internal.org.bouncycastle.asn1.x500.style;
  */
 public class X500NameTokenizer
 {
-    private final String value;
-    private final char separator;
+    private String          value;
+    private int             index;
+    private char            separator;
+    private StringBuffer    buf = new StringBuffer();
 
-    private int index;
-
-    public X500NameTokenizer(String oid)
+    public X500NameTokenizer(
+        String  oid)
     {
         this(oid, ',');
     }
-
-    public X500NameTokenizer(String oid, char separator)
+    
+    public X500NameTokenizer(
+        String  oid,
+        char    separator)
     {
-        if (oid == null)
-        {
-            throw new NullPointerException();
-        }
-        if (separator == '"' || separator == '\\')
-        {
-            throw new IllegalArgumentException("reserved separator character");
-        }
-
         this.value = oid;
+        this.index = -1;
         this.separator = separator;
-        this.index = oid.length() < 1 ? 0 : -1;
     }
 
     public boolean hasMoreTokens()
     {
-        return index < value.length();
+        return (index != value.length());
     }
 
     public String nextToken()
     {
-        if (index >= value.length())
+        if (index == value.length())
         {
             return null;
         }
 
+        int     end = index + 1;
         boolean quoted = false;
         boolean escaped = false;
 
-        int beginIndex = index + 1;
-        while (++index < value.length())
-        {
-            char c = value.charAt(index);
+        buf.setLength(0);
 
-            if (escaped)
+        while (end != value.length())
+        {
+            char    c = value.charAt(end);
+
+            if (c == '"')
             {
+                if (!escaped)
+                {
+                    quoted = !quoted;
+                }
+                buf.append(c);
                 escaped = false;
             }
-            else if (c == '"')
+            else
             {
-                quoted = !quoted;
+                if (escaped || quoted)
+                {
+                    buf.append(c);
+                    escaped = false;
+                }
+                else if (c == '\\')
+                {
+                    buf.append(c);
+                    escaped = true;
+                }
+                else if (c == separator)
+                {
+                    break;
+                }
+                else
+                {
+                    buf.append(c);
+                }
             }
-            else if (quoted)
-            {
-            }
-            else if (c == '\\')
-            {
-                escaped = true;
-            }
-            else if (c == separator)
-            {
-                return value.substring(beginIndex, index);
-            }
+            end++;
         }
 
-        if (escaped || quoted)
-        {
-            throw new IllegalArgumentException("badly formatted directory string");
-        }
+        index = end;
 
-        return value.substring(beginIndex, index);
+        return buf.toString();
     }
 }

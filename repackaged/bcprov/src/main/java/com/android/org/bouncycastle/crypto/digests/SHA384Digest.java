@@ -1,9 +1,6 @@
 /* GENERATED SOURCE. DO NOT MODIFY. */
 package com.android.org.bouncycastle.crypto.digests;
 
-import com.android.org.bouncycastle.crypto.CryptoServiceProperties;
-import com.android.org.bouncycastle.crypto.CryptoServicePurpose;
-import com.android.org.bouncycastle.crypto.CryptoServicesRegistrar;
 import com.android.org.bouncycastle.util.Memoable;
 import com.android.org.bouncycastle.util.Pack;
 
@@ -30,19 +27,6 @@ public class SHA384Digest
      */
     public SHA384Digest()
     {
-        this(CryptoServicePurpose.ANY);
-    }
-
-    /**
-     * Standard constructor, with purpose
-     */
-    public SHA384Digest(CryptoServicePurpose purpose)
-    {
-        super(purpose);
-
-        CryptoServicesRegistrar.checkConstraints(cryptoServiceProperties());
-
-        reset();
     }
 
     /**
@@ -52,8 +36,6 @@ public class SHA384Digest
     public SHA384Digest(SHA384Digest t)
     {
         super(t);
-
-        CryptoServicesRegistrar.checkConstraints(cryptoServiceProperties());
     }
 
     /**
@@ -63,11 +45,7 @@ public class SHA384Digest
      */
     public SHA384Digest(byte[] encodedState)
     {
-        super(CryptoServicePurpose.values()[encodedState[encodedState.length - 1]]);
-
         restoreState(encodedState);
-
-        CryptoServicesRegistrar.checkConstraints(cryptoServiceProperties());
     }
 
     public String getAlgorithmName()
@@ -133,16 +111,8 @@ public class SHA384Digest
 
     public byte[] getEncodedState()
     {
-        byte[] encoded = new byte[getEncodedStateSize() + 1];
+        byte[] encoded = new byte[getEncodedStateSize()];
         super.populateState(encoded);
-
-        encoded[encoded.length - 1] = (byte)purpose.ordinal();
-
         return encoded;
-    }
-
-    protected CryptoServiceProperties cryptoServiceProperties()
-    {
-        return Utils.getDefaultProperties(this, 256, purpose);
     }
 }

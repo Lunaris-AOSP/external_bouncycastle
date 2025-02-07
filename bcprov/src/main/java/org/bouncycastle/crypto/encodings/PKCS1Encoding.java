@@ -233,86 +233,52 @@ public class PKCS1Encoding
     }
 
     /**
-     * Check the argument is a valid encoding with type 1. Returns the plaintext length if valid, or -1 if invalid.
+     * Checks if the argument is a correctly PKCS#1.5 encoded Plaintext
+     * for encryption.
+     *
+     * @param encoded The Plaintext.
+     * @param pLen    Expected length of the plaintext.
+     * @return Either 0, if the encoding is correct, or -1, if it is incorrect.
      */
-    private static int checkPkcs1Encoding1(byte[] buf)
+    private static int checkPkcs1Encoding(byte[] encoded, int pLen)
     {
-        int foundZeroMask = 0;
-        int lastPadPos = 0;
+        int correct = 0;
+        /*
+		 * Check if the first two bytes are 0 2
+		 */
+        correct |= (encoded[0] ^ 2);
 
-        // The first byte should be 0x01
-        int badPadSign = -((buf[0] & 0xFF) ^ 0x01);
+		/*
+		 * Now the padding check, check for no 0 byte in the padding
+		 */
+        int plen = encoded.length - (
+            pLen /* Length of the PMS */
+                + 1 /* Final 0-byte before PMS */
+        );
 
-        // There must be a zero terminator for the padding somewhere
-        for (int i = 1; i < buf.length; ++i)
+        for (int i = 1; i < plen; i++)
         {
-            int padByte = buf[i] & 0xFF;
-            int is0x00Mask = ((padByte ^ 0x00) - 1) >> 31;
-            int is0xFFMask = ((padByte ^ 0xFF) - 1) >> 31;
-            lastPadPos ^= i & ~foundZeroMask & is0x00Mask;
-            foundZeroMask |= is0x00Mask;
-            badPadSign |= ~(foundZeroMask | is0xFFMask);
+            int tmp = encoded[i];
+            tmp |= tmp >> 1;
+            tmp |= tmp >> 2;
+            tmp |= tmp >> 4;
+            correct |= (tmp & 1) - 1;
         }
 
-        // The header should be at least 10 bytes
-        badPadSign |= lastPadPos - 9;
+		/*
+		 * Make sure the padding ends with a 0 byte.
+		 */
+        correct |= encoded[encoded.length - (pLen + 1)];
 
-        int plaintextLength = buf.length - 1 - lastPadPos;
-        return plaintextLength | badPadSign >> 31;
+		/*
+		 * Return 0 or 1, depending on the result.
+		 */
+        correct |= correct >> 1;
+        correct |= correct >> 2;
+        correct |= correct >> 4;
+        return ~((correct & 1) - 1);
     }
 
-    /**
-     * Check the argument is a valid encoding with type 2. Returns the plaintext length if valid, or -1 if invalid.
-     */
-    private static int checkPkcs1Encoding2(byte[] buf)
-    {
-        int foundZeroMask = 0;
-        int lastPadPos = 0;
-
-        // The first byte should be 0x02
-        int badPadSign = -((buf[0] & 0xFF) ^ 0x02);
-
-        // There must be a zero terminator for the padding somewhere
-        for (int i = 1; i < buf.length; ++i)
-        {
-            int padByte = buf[i] & 0xFF;
-            int is0x00Mask = ((padByte ^ 0x00) - 1) >> 31;
-            lastPadPos ^= i & ~foundZeroMask & is0x00Mask;
-            foundZeroMask |= is0x00Mask;
-        }
-
-        // The header should be at least 10 bytes
-        badPadSign |= lastPadPos - 9;
-
-        int plaintextLength = buf.length - 1 - lastPadPos;
-        return plaintextLength | badPadSign >> 31;
-    }
-
-    /**
-     * Check the argument is a valid encoding with type 2 of a plaintext with the given length. Returns 0 if
-     * valid, or -1 if invalid.
-     */
-    private static int checkPkcs1Encoding2(byte[] buf, int plaintextLength)
-    {
-        // The first byte should be 0x02
-        int badPadSign = -((buf[0] & 0xFF) ^ 0x02);
-
-        int lastPadPos = buf.length - 1 - plaintextLength;
-
-        // The header should be at least 10 bytes
-        badPadSign |= lastPadPos - 9;
-
-        // All pad bytes before the last one should be non-zero
-        for (int i = 1; i < lastPadPos; ++i)
-        {
-            badPadSign |= (buf[i] & 0xFF) - 1;
-        }
-
-        // Last pad byte should be zero
-        badPadSign |= -(buf[lastPadPos] & 0xFF);
-
-        return badPadSign >> 31;
-    }
 
     /**
      * Decode PKCS#1.5 encoding, and return a random value if the padding is not correct.
@@ -332,43 +298,36 @@ public class PKCS1Encoding
             throw new InvalidCipherTextException("sorry, this method is only for decryption, not for signing");
         }
 
-        int plaintextLength = this.pLen;
-
-        byte[] random = fallback;
-        if (fallback == null)
+        byte[] block = engine.processBlock(in, inOff, inLen);
+        byte[] random;
+        if (this.fallback == null)
         {
-            random = new byte[plaintextLength];
+            random = new byte[this.pLen];
             this.random.nextBytes(random);
         }
-
-        int badPadMask = 0;
-        int strictBlockSize = engine.getOutputBlockSize();
-        byte[] block = engine.processBlock(in, inOff, inLen);
-
-        byte[] data = block;
-        if (block.length != strictBlockSize)
+        else
         {
-            if (useStrictLength || block.length < strictBlockSize)
-            {
-                data = blockBuffer;
-            }
+            random = fallback;
         }
 
-        badPadMask |= checkPkcs1Encoding2(data, plaintextLength);
+        byte[] data = (useStrictLength & (block.length != engine.getOutputBlockSize())) ? blockBuffer : block;
 
-        /*
-         * Now, to a constant time constant memory copy of the decrypted value
-         * or the random value, depending on the validity of the padding.
-         */
-        int dataOff = data.length - plaintextLength; 
-        byte[] result = new byte[plaintextLength];
-        for (int i = 0; i < plaintextLength; ++i)
+		/*
+		 * Check the padding.
+		 */
+        int correct = PKCS1Encoding.checkPkcs1Encoding(data, this.pLen);
+		
+		/*
+		 * Now, to a constant time constant memory copy of the decrypted value
+		 * or the random value, depending on the validity of the padding.
+		 */
+        byte[] result = new byte[this.pLen];
+        for (int i = 0; i < this.pLen; i++)
         {
-            result[i] = (byte)((data[dataOff + i] & ~badPadMask) | (random[i] & badPadMask));
+            result[i] = (byte)((data[i + (data.length - pLen)] & (~correct)) | (random[i] & correct));
         }
 
-        Arrays.fill(block, (byte)0);
-        Arrays.fill(blockBuffer, 0, Math.max(0, blockBuffer.length - block.length), (byte)0);
+        Arrays.fill(data, (byte)0);
 
         return result;
     }
@@ -376,50 +335,95 @@ public class PKCS1Encoding
     /**
      * @throws InvalidCipherTextException if the decrypted block is not in PKCS1 format.
      */
-    private byte[] decodeBlock(byte[] in, int inOff, int inLen)
+    private byte[] decodeBlock(
+        byte[] in,
+        int inOff,
+        int inLen)
         throws InvalidCipherTextException
     {
         /*
          * If the length of the expected plaintext is known, we use a constant-time decryption.
          * If the decryption fails, we return a random value.
          */
-        if (forPrivateKey && this.pLen != -1)
+        if (this.pLen != -1)
         {
             return this.decodeBlockOrRandom(in, inOff, inLen);
         }
 
-        int strictBlockSize = engine.getOutputBlockSize();
         byte[] block = engine.processBlock(in, inOff, inLen);
+        boolean incorrectLength = (useStrictLength & (block.length != engine.getOutputBlockSize()));
 
-        boolean incorrectLength = useStrictLength & (block.length != strictBlockSize);
-
-        byte[] data = block;
-        if (block.length < strictBlockSize)
+        byte[] data;
+        if (block.length < getOutputBlockSize())
         {
             data = blockBuffer;
         }
-
-        int plaintextLength = forPrivateKey ? checkPkcs1Encoding2(data) : checkPkcs1Encoding1(data);
-
-        try
+        else
         {
-            if (plaintextLength < 0)
-            {
-                throw new InvalidCipherTextException("block incorrect");
-            }
-            if (incorrectLength)
-            {
-                throw new InvalidCipherTextException("block incorrect size");
-            }
+            data = block;
+        }
 
-            byte[] result = new byte[plaintextLength];
-            System.arraycopy(data, data.length - plaintextLength, result, 0, plaintextLength);
-            return result;
-        }
-        finally
+        byte type = data[0];
+
+        boolean badType;
+        if (forPrivateKey)
         {
-            Arrays.fill(block, (byte)0);
-            Arrays.fill(blockBuffer, 0, Math.max(0, blockBuffer.length - block.length), (byte)0);
+            badType = (type != 2);
         }
+        else
+        {
+            badType = (type != 1);
+        }
+
+        //
+        // find and extract the message block.
+        //
+        int start = findStart(type, data);
+
+        start++;           // data should start at the next byte
+
+        if (badType | start < HEADER_LENGTH)
+        {
+            Arrays.fill(data, (byte)0);
+            throw new InvalidCipherTextException("block incorrect");
+        }
+
+        // if we get this far, it's likely to be a genuine encoding error
+        if (incorrectLength)
+        {
+            Arrays.fill(data, (byte)0);
+            throw new InvalidCipherTextException("block incorrect size");
+        }
+
+        byte[] result = new byte[data.length - start];
+
+        System.arraycopy(data, start, result, 0, result.length);
+
+        return result;
+    }
+
+    private int findStart(byte type, byte[] block)
+        throws InvalidCipherTextException
+    {
+        int start = -1;
+        boolean padErr = false;
+
+        for (int i = 1; i != block.length; i++)
+        {
+            byte pad = block[i];
+
+            if (pad == 0 & start < 0)
+            {
+                start = i;
+            }
+            padErr |= (type == 1 & start < 0 & pad != (byte)0xff);
+        }
+
+        if (padErr)
+        {
+            return -1;
+        }
+
+        return start;
     }
 }

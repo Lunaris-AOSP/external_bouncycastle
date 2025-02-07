@@ -99,7 +99,10 @@ public class CertificationRequestInfo
         this(X500Name.getInstance(subject.toASN1Primitive()), pkInfo, attributes);
     }
 
-    private CertificationRequestInfo(
+    /**
+     * @deprecated use getInstance().
+     */
+    public CertificationRequestInfo(
         ASN1Sequence  seq)
     {
         version = (ASN1Integer)seq.getObjectAt(0);

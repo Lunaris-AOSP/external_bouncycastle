@@ -291,11 +291,6 @@ public class ECUtil
     {
         if (order == null)     // implicitly CA
         {
-            if (configuration == null)
-            {
-                return privateValue.bitLength();   // a guess but better than an exception!
-            }
-
             ECParameterSpec implicitCA = configuration.getEcImplicitlyCa();
 
             if (implicitCA == null)
@@ -314,24 +309,26 @@ public class ECUtil
     public static ASN1ObjectIdentifier getNamedCurveOid(
         String curveName)
     {
-        if (null == curveName || curveName.length() < 1)
-        {
-            return null;
-        }
+        String name = curveName;
 
-        int spacePos = curveName.indexOf(' ');
+        int spacePos = name.indexOf(' ');
         if (spacePos > 0)
         {
-            curveName = curveName.substring(spacePos + 1);
+            name = name.substring(spacePos + 1);
         }
 
-        ASN1ObjectIdentifier oid = getOID(curveName);
-        if (null != oid)
+        try
         {
-            return oid;
+            if (name.charAt(0) >= '0' && name.charAt(0) <= '2')
+            {
+                return new ASN1ObjectIdentifier(name);
+            }
+        }
+        catch (IllegalArgumentException ex)
+        {
         }
 
-        return ECNamedCurveTable.getOID(curveName);
+        return ECNamedCurveTable.getOID(name);
     }
 
     public static ASN1ObjectIdentifier getNamedCurveOid(
@@ -448,21 +445,5 @@ public class ECUtil
                 return null;
             }
         });
-    }
-
-    private static ASN1ObjectIdentifier getOID(String curveName)
-    {
-        char firstChar = curveName.charAt(0);
-        if (firstChar >= '0' && firstChar <= '2')
-        {
-            try
-            {
-                return new ASN1ObjectIdentifier(curveName);
-            }
-            catch (Exception e)
-            {
-            }
-        }
-        return null;
     }
 }

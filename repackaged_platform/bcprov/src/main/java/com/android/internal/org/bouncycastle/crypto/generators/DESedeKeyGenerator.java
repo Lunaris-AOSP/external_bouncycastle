@@ -1,10 +1,7 @@
 /* GENERATED SOURCE. DO NOT MODIFY. */
 package com.android.internal.org.bouncycastle.crypto.generators;
 
-import com.android.internal.org.bouncycastle.crypto.CryptoServicePurpose;
-import com.android.internal.org.bouncycastle.crypto.CryptoServicesRegistrar;
 import com.android.internal.org.bouncycastle.crypto.KeyGenerationParameters;
-import com.android.internal.org.bouncycastle.crypto.constraints.DefaultServiceProperties;
 import com.android.internal.org.bouncycastle.crypto.params.DESedeParameters;
 
 /**
@@ -46,8 +43,6 @@ public class DESedeKeyGenerator
                 + (2 * 8 * DESedeParameters.DES_KEY_LENGTH)
                 + " bits long.");
         }
-
-        CryptoServicesRegistrar.checkConstraints(new DefaultServiceProperties("DESedeKeyGen", 112, null, CryptoServicePurpose.KEYGEN));
     }
 
     public byte[] generateKey()

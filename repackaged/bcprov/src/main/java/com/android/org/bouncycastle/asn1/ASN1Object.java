@@ -19,12 +19,12 @@ public abstract class ASN1Object
 
     public void encodeTo(OutputStream output) throws IOException
     {
-        toASN1Primitive().encodeTo(output);
+        ASN1OutputStream.create(output).writeObject(this);
     }
 
     public void encodeTo(OutputStream output, String encoding) throws IOException
     {
-        toASN1Primitive().encodeTo(output, encoding);
+        ASN1OutputStream.create(output, encoding).writeObject(this);
     }
 
     /**
@@ -36,7 +36,7 @@ public abstract class ASN1Object
     public byte[] getEncoded() throws IOException
     {
         ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-        toASN1Primitive().encodeTo(bOut);
+        encodeTo(bOut);
         return bOut.toByteArray();
     }
 
@@ -50,7 +50,7 @@ public abstract class ASN1Object
     public byte[] getEncoded(String encoding) throws IOException
     {
         ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-        toASN1Primitive().encodeTo(bOut, encoding);
+        encodeTo(bOut, encoding);
         return bOut.toByteArray();
     }
 

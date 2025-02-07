@@ -1,15 +1,12 @@
 package org.bouncycastle.crypto.engines;
 
 import org.bouncycastle.crypto.CipherParameters;
-import org.bouncycastle.crypto.CryptoServicesRegistrar;
 import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.OutputLengthException;
 import org.bouncycastle.crypto.StreamCipher;
-import org.bouncycastle.crypto.constraints.DefaultServiceProperties;
 import org.bouncycastle.crypto.params.KeyParameter;
 
-public class RC4Engine
-    implements StreamCipher
+public class RC4Engine implements StreamCipher
 {
     private final static int STATE_LENGTH = 256;
 
@@ -22,12 +19,6 @@ public class RC4Engine
     private int         x = 0;
     private int         y = 0;
     private byte[]      workingKey = null;
-    private boolean     forEncryption;
-
-    public RC4Engine()
-    {
-        CryptoServicesRegistrar.checkConstraints(new DefaultServiceProperties(getAlgorithmName(), 20));
-    }
 
     /**
      * initialise a RC4 cipher.
@@ -39,7 +30,8 @@ public class RC4Engine
      */
     public void init(
         boolean             forEncryption, 
-        CipherParameters     params)
+        CipherParameters     params
+   )
     {
         if (params instanceof KeyParameter)
         {
@@ -48,11 +40,8 @@ public class RC4Engine
              * symmetrical, so the 'forEncryption' is 
              * irrelevant.
              */
-            this.workingKey = ((KeyParameter)params).getKey();
-            this.forEncryption = forEncryption;
+            workingKey = ((KeyParameter)params).getKey();
             setKey(workingKey);
-
-            CryptoServicesRegistrar.checkConstraints(new DefaultServiceProperties(getAlgorithmName(), 20, params, Utils.getPurpose(forEncryption)));
 
             return;
         }

@@ -31,6 +31,7 @@ import com.android.internal.org.bouncycastle.crypto.InvalidCipherTextException;
 // Android-removed: Unsupported algorithm
 // import org.bouncycastle.crypto.encodings.ISO9796d1Encoding;
 import com.android.internal.org.bouncycastle.crypto.encodings.OAEPEncoding;
+import com.android.internal.org.bouncycastle.crypto.encodings.PKCS1Encoding;
 import com.android.internal.org.bouncycastle.crypto.engines.RSABlindedEngine;
 import com.android.internal.org.bouncycastle.crypto.params.ParametersWithRandom;
 import com.android.internal.org.bouncycastle.jcajce.provider.asymmetric.util.BaseCipherSpi;
@@ -208,7 +209,7 @@ public class CipherSpi
         }
         else if (pad.equals("PKCS1PADDING"))
         {
-            cipher = new CustomPKCS1Encoding(new RSABlindedEngine());
+            cipher = new PKCS1Encoding(new RSABlindedEngine());
         }
         // BEGIN Android-removed: Unsupported algorithm
         // else if (pad.equals("ISO9796-1PADDING"))
@@ -545,26 +546,15 @@ public class CipherSpi
     {
         try
         {
-            byte[] output;
-            try
-            {
-                output = cipher.processBlock(bOut.getBuf(), 0, bOut.size());
-            }
-            catch (InvalidCipherTextException e)
-            {
-                throw new BadBlockException("unable to decrypt block", e);
-            }
-            catch (ArrayIndexOutOfBoundsException e)
-            {
-                throw new BadBlockException("unable to decrypt block", e);
-            }
-
-            if (output == null)
-            {
-                throw new BadBlockException("unable to decrypt block", null);
-            }
-
-            return output;
+            return cipher.processBlock(bOut.getBuf(), 0, bOut.size());
+        }
+        catch (InvalidCipherTextException e)
+        {
+            throw new BadBlockException("unable to decrypt block", e);
+        }
+        catch (ArrayIndexOutOfBoundsException e)
+        {
+            throw new BadBlockException("unable to decrypt block", e);
         }
         finally
         {
@@ -593,7 +583,7 @@ public class CipherSpi
     {
         public PKCS1v1_5Padding()
         {
-            super(new CustomPKCS1Encoding(new RSABlindedEngine()));
+            super(new PKCS1Encoding(new RSABlindedEngine()));
         }
     }
 
@@ -602,7 +592,7 @@ public class CipherSpi
     {
         public PKCS1v1_5Padding_PrivateOnly()
         {
-            super(false, true, new CustomPKCS1Encoding(new RSABlindedEngine()));
+            super(false, true, new PKCS1Encoding(new RSABlindedEngine()));
         }
     }
 
@@ -611,7 +601,7 @@ public class CipherSpi
     {
         public PKCS1v1_5Padding_PublicOnly()
         {
-            super(true, false, new CustomPKCS1Encoding(new RSABlindedEngine()));
+            super(true, false, new PKCS1Encoding(new RSABlindedEngine()));
         }
     }
 

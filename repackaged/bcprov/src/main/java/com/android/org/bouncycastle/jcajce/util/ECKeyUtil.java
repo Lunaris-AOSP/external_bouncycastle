@@ -12,7 +12,6 @@ import com.android.org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import com.android.org.bouncycastle.asn1.x9.ECNamedCurveTable;
 import com.android.org.bouncycastle.asn1.x9.X962Parameters;
 import com.android.org.bouncycastle.asn1.x9.X9ECParameters;
-import com.android.org.bouncycastle.asn1.x9.X9ECParametersHolder;
 import com.android.org.bouncycastle.asn1.x9.X9ECPoint;
 import com.android.org.bouncycastle.crypto.ec.CustomNamedCurves;
 
@@ -71,10 +70,10 @@ public class ECKeyUtil
             {
                 ASN1ObjectIdentifier oid = (ASN1ObjectIdentifier)params.getParameters();
 
-                X9ECParametersHolder x9 = CustomNamedCurves.getByOIDLazy(oid);
+                X9ECParameters x9 = CustomNamedCurves.getByOID(oid);
                 if (x9 == null)
                 {
-                    x9 = ECNamedCurveTable.getByOIDLazy(oid);
+                    x9 = ECNamedCurveTable.getByOID(oid);
                 }
                 curve = x9.getCurve();
             }

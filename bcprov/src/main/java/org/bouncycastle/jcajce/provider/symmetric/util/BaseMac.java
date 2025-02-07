@@ -32,6 +32,8 @@ import org.bouncycastle.jcajce.spec.AEADParameterSpec;
 public class BaseMac
     extends MacSpi implements PBE
 {
+    private static final Class gcmSpecClass = ClassUtil.loadClass(BaseMac.class, "javax.crypto.spec.GCMParameterSpec");
+
     private Mac macEngine;
 
     private int scheme = PKCS12;
@@ -209,7 +211,7 @@ public class BaseMac
         {
             param = new KeyParameter(key.getEncoded());
         }
-        else if (GcmSpecUtil.isGcmSpec(params))
+        else if (gcmSpecClass != null && gcmSpecClass.isAssignableFrom(params.getClass()))
         {
             param = GcmSpecUtil.extractAeadParameters(keyParam, params);
         }

@@ -17,24 +17,18 @@ class LazyEncodedSequence
         // NOTE: Initially, the actual 'elements' will be empty
         super();
 
-        if (null == encoded)
-        {
-            throw new NullPointerException("'encoded' cannot be null");
-        }
-
         this.encoded = encoded;
     }
 
-    public ASN1Encodable getObjectAt(int index)
+    public synchronized ASN1Encodable getObjectAt(int index)
     {
         force();
 
         return super.getObjectAt(index);
     }
 
-    public Enumeration getObjects()
+    public synchronized Enumeration getObjects()
     {
-        byte[] encoded = getContents();
         if (null != encoded)
         {
             return new LazyConstructionEnumeration(encoded);
@@ -43,28 +37,28 @@ class LazyEncodedSequence
         return super.getObjects();
     }
 
-    public int hashCode()
+    public synchronized int hashCode()
     {
         force();
 
         return super.hashCode();
     }
 
-    public Iterator<ASN1Encodable> iterator()
+    public synchronized Iterator<ASN1Encodable> iterator()
     {
         force();
 
         return super.iterator();
     }
 
-    public int size()
+    public synchronized int size()
     {
         force();
 
         return super.size();
     }
 
-    public ASN1Encodable[] toArray()
+    public synchronized ASN1Encodable[] toArray()
     {
         force();
 
@@ -78,48 +72,27 @@ class LazyEncodedSequence
         return super.toArrayInternal();
     }
 
-    int encodedLength(boolean withTag)
+    synchronized int encodedLength()
         throws IOException
     {
-        byte[] encoded = getContents();
         if (null != encoded)
         {
-            return ASN1OutputStream.getLengthOfEncodingDL(withTag, encoded.length);
+            return 1 + StreamUtil.calculateBodyLength(encoded.length) + encoded.length;
         }
 
-        return super.toDLObject().encodedLength(withTag);
+        return super.toDLObject().encodedLength();
     }
 
-    void encode(ASN1OutputStream out, boolean withTag) throws IOException
+    synchronized void encode(ASN1OutputStream out, boolean withTag) throws IOException
     {
-        byte[] encoded = getContents();
         if (null != encoded)
         {
-            out.writeEncodingDL(withTag, BERTags.CONSTRUCTED | BERTags.SEQUENCE, encoded);
-            return;
+            out.writeEncoded(withTag, BERTags.SEQUENCE | BERTags.CONSTRUCTED, encoded);
         }
-
-        super.toDLObject().encode(out, withTag);
-    }
-
-    ASN1BitString toASN1BitString()
-    {
-        return ((ASN1Sequence)toDLObject()).toASN1BitString();
-    }
-
-    ASN1External toASN1External()
-    {
-        return ((ASN1Sequence)toDLObject()).toASN1External();
-    }
-
-    ASN1OctetString toASN1OctetString()
-    {
-        return ((ASN1Sequence)toDLObject()).toASN1OctetString();
-    }
-
-    ASN1Set toASN1Set()
-    {
-        return ((ASN1Sequence)toDLObject()).toASN1Set();
+        else
+        {
+            super.toDLObject().encode(out, withTag);
+        }
     }
 
     synchronized ASN1Primitive toDERObject()
@@ -136,28 +109,20 @@ class LazyEncodedSequence
         return super.toDLObject();
     }
 
-    private synchronized void force()
+    private void force()
     {
         if (null != encoded)
         {
-            ASN1InputStream aIn = new ASN1InputStream(encoded, true);
-            try
-            {
-                ASN1EncodableVector v = aIn.readVector();
-                aIn.close();
+            ASN1EncodableVector v = new ASN1EncodableVector();
 
-                this.elements = v.takeElements();
-                this.encoded = null;
-            }
-            catch (IOException e)
+            Enumeration en = new LazyConstructionEnumeration(encoded);
+            while (en.hasMoreElements())
             {
-                throw new ASN1ParsingException("malformed ASN.1: " + e, e);
+                v.add((ASN1Primitive)en.nextElement());
             }
+
+            this.elements = v.takeElements();
+            this.encoded = null;
         }
-    }
-
-    private synchronized byte[] getContents()
-    {
-        return encoded;
     }
 }

@@ -48,12 +48,7 @@ public class X962Parameters
         ASN1TaggedObject obj,
         boolean          explicit)
     {
-        if (!explicit)
-        {
-            throw new IllegalArgumentException("choice item must be explicitly tagged");
-        }
-
-        return getInstance(obj.getExplicitBaseObject());
+        return getInstance(obj.getObject()); // must be explicitly tagged
     }
     
     public X962Parameters(

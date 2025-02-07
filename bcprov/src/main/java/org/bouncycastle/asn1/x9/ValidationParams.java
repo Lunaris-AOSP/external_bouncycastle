@@ -2,7 +2,6 @@ package org.bouncycastle.asn1.x9;
 
 import java.math.BigInteger;
 
-import org.bouncycastle.asn1.ASN1BitString;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1Object;
@@ -24,7 +23,7 @@ import org.bouncycastle.asn1.DERSequence;
 public class ValidationParams
     extends ASN1Object
 {
-    private ASN1BitString seed;
+    private DERBitString seed;
     private ASN1Integer pgenCounter;
 
     public static ValidationParams getInstance(ASN1TaggedObject obj, boolean explicit)
@@ -79,7 +78,7 @@ public class ValidationParams
             throw new IllegalArgumentException("Bad sequence size: " + seq.size());
         }
 
-        this.seed = ASN1BitString.getInstance(seq.getObjectAt(0));
+        this.seed = DERBitString.getInstance(seq.getObjectAt(0));
         this.pgenCounter = ASN1Integer.getInstance(seq.getObjectAt(1));
     }
 

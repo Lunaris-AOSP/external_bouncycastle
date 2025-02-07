@@ -20,18 +20,18 @@ public class DERNull
     {
     }
 
-    boolean encodeConstructed()
+    boolean isConstructed()
     {
         return false;
     }
 
-    int encodedLength(boolean withTag)
+    int encodedLength()
     {
-        return ASN1OutputStream.getLengthOfEncodingDL(withTag, 0);
+        return 2;
     }
 
     void encode(ASN1OutputStream out, boolean withTag) throws IOException
     {
-        out.writeEncodingDL(withTag, BERTags.NULL, zeroBytes);
+        out.writeEncoded(withTag, BERTags.NULL, zeroBytes);
     }
 }

@@ -1,7 +1,6 @@
 /* GENERATED SOURCE. DO NOT MODIFY. */
 package com.android.org.bouncycastle.asn1.x509;
 
-import com.android.org.bouncycastle.asn1.ASN1BitString;
 import com.android.org.bouncycastle.asn1.ASN1EncodableVector;
 import com.android.org.bouncycastle.asn1.ASN1Object;
 import com.android.org.bouncycastle.asn1.ASN1Primitive;
@@ -17,7 +16,7 @@ public class AttributeCertificate
 {
     AttributeCertificateInfo    acinfo;
     AlgorithmIdentifier         signatureAlgorithm;
-    ASN1BitString               signatureValue;
+    DERBitString                signatureValue;
 
     /**
      * @param obj
@@ -40,23 +39,28 @@ public class AttributeCertificate
     public AttributeCertificate(
         AttributeCertificateInfo    acinfo,
         AlgorithmIdentifier         signatureAlgorithm,
-        ASN1BitString               signatureValue)
+        DERBitString                signatureValue)
     {
         this.acinfo = acinfo;
         this.signatureAlgorithm = signatureAlgorithm;
         this.signatureValue = signatureValue;
     }
 
-    private AttributeCertificate(ASN1Sequence seq)
+    /**
+     * @deprecated use getInstance() method.
+     */
+    public AttributeCertificate(
+        ASN1Sequence    seq)
     {
         if (seq.size() != 3)
         {
-            throw new IllegalArgumentException("Bad sequence size: " + seq.size());
+            throw new IllegalArgumentException("Bad sequence size: "
+                    + seq.size());
         }
 
         this.acinfo = AttributeCertificateInfo.getInstance(seq.getObjectAt(0));
         this.signatureAlgorithm = AlgorithmIdentifier.getInstance(seq.getObjectAt(1));
-        this.signatureValue = ASN1BitString.getInstance(seq.getObjectAt(2));
+        this.signatureValue = DERBitString.getInstance(seq.getObjectAt(2));
     }
     
     public AttributeCertificateInfo getAcinfo()
@@ -69,7 +73,7 @@ public class AttributeCertificate
         return signatureAlgorithm;
     }
 
-    public ASN1BitString getSignatureValue()
+    public DERBitString getSignatureValue()
     {
         return signatureValue;
     }

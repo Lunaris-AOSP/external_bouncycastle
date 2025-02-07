@@ -89,7 +89,7 @@ public class Holder
         default:
             throw new IllegalArgumentException("unknown tag in Holder");
         }
-        version = V1_CERTIFICATE_HOLDER;
+        version = 0;
     }
 
     /**
@@ -125,7 +125,7 @@ public class Holder
                 throw new IllegalArgumentException("unknown tag in Holder");
             }
         }
-        version = V2_CERTIFICATE_HOLDER;
+        version = 1;
     }
 
     public Holder(IssuerSerial baseCertificateID)
@@ -211,7 +211,7 @@ public class Holder
 
     public ASN1Primitive toASN1Primitive()
     {
-        if (version == V2_CERTIFICATE_HOLDER)
+        if (version == 1)
         {
             ASN1EncodableVector v = new ASN1EncodableVector(3);
 

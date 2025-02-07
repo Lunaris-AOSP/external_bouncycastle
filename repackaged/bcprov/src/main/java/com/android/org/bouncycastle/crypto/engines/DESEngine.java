@@ -3,10 +3,8 @@ package com.android.org.bouncycastle.crypto.engines;
 
 import com.android.org.bouncycastle.crypto.BlockCipher;
 import com.android.org.bouncycastle.crypto.CipherParameters;
-import com.android.org.bouncycastle.crypto.CryptoServicesRegistrar;
 import com.android.org.bouncycastle.crypto.DataLengthException;
 import com.android.org.bouncycastle.crypto.OutputLengthException;
-import com.android.org.bouncycastle.crypto.constraints.DefaultServiceProperties;
 import com.android.org.bouncycastle.crypto.params.KeyParameter;
 import com.android.org.bouncycastle.util.Pack;
 
@@ -15,12 +13,10 @@ import com.android.org.bouncycastle.util.Pack;
  * @hide This class is not part of the Android public SDK API
  */
 public class DESEngine
-    extends DESBase
     implements BlockCipher
 {
     protected static final int  BLOCK_SIZE = 8;
 
-    private boolean             forEncryption;
     private int[]               workingKey = null;
 
     /**
@@ -28,7 +24,6 @@ public class DESEngine
      */
     public DESEngine()
     {
-        CryptoServicesRegistrar.checkConstraints(new DefaultServiceProperties(getAlgorithmName(), 56));
     }
 
     /**
@@ -45,16 +40,13 @@ public class DESEngine
     {
         if (params instanceof KeyParameter)
         {
-            if (((KeyParameter)params).getKeyLength() > 8)
+            if (((KeyParameter)params).getKey().length > 8)
             {
                 throw new IllegalArgumentException("DES key too long - should be 8 bytes");
             }
-
-            forEncryption = encrypting;
+            
             workingKey = generateWorkingKey(encrypting,
                                   ((KeyParameter)params).getKey());
-
-            CryptoServicesRegistrar.checkConstraints(new DefaultServiceProperties(getAlgorithmName(), 56, params, Utils.getPurpose(forEncryption)));
 
             return;
         }

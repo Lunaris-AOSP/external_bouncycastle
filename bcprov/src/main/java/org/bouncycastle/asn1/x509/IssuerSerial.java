@@ -2,22 +2,22 @@ package org.bouncycastle.asn1.x509;
 
 import java.math.BigInteger;
 
-import org.bouncycastle.asn1.ASN1BitString;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1TaggedObject;
+import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x500.X500Name;
 
 public class IssuerSerial
     extends ASN1Object
 {
-    GeneralNames  issuer;
-    ASN1Integer   serial;
-    ASN1BitString issuerUID;
+    GeneralNames            issuer;
+    ASN1Integer              serial;
+    DERBitString            issuerUID;
 
     public static IssuerSerial getInstance(
             Object  obj)
@@ -55,7 +55,7 @@ public class IssuerSerial
 
         if (seq.size() == 3)
         {
-            issuerUID = ASN1BitString.getInstance(seq.getObjectAt(2));
+            issuerUID = DERBitString.getInstance(seq.getObjectAt(2));
         }
     }
 
@@ -91,7 +91,7 @@ public class IssuerSerial
         return serial;
     }
 
-    public ASN1BitString getIssuerUID()
+    public DERBitString getIssuerUID()
     {
         return issuerUID;
     }

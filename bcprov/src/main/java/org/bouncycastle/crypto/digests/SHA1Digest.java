@@ -1,4 +1,3 @@
-// BEGIN Android-changed: maintain old behaviour
 package org.bouncycastle.crypto.digests;
 
 import org.bouncycastle.util.Memoable;
@@ -349,4 +348,6 @@ public class SHA1Digest
     }
 }
 
-// END Android-changed: maintain old behaviour
+
+
+

@@ -1,6 +1,7 @@
 package org.bouncycastle.asn1;
 
 import java.io.IOException;
+import java.util.Enumeration;
 
 /**
  * BER TaggedObject - in ASN.1 notation this is any object preceded by
@@ -14,14 +15,11 @@ public class BERTaggedObject
      * @param tagNo the tag number for this object.
      * @param obj the tagged object.
      */
-    public BERTaggedObject(int tagNo, ASN1Encodable obj)
+    public BERTaggedObject(
+        int             tagNo,
+        ASN1Encodable    obj)
     {
         super(true, tagNo, obj);
-    }
-
-    public BERTaggedObject(int tagClass, int tagNo, ASN1Encodable obj)
-    {
-        super(true, tagClass, tagNo, obj);
     }
 
     /**
@@ -29,81 +27,112 @@ public class BERTaggedObject
      * @param tagNo the tag number for this object.
      * @param obj the tagged object.
      */
-    public BERTaggedObject(boolean explicit, int tagNo, ASN1Encodable obj)
+    public BERTaggedObject(
+        boolean         explicit,
+        int             tagNo,
+        ASN1Encodable    obj)
     {
         super(explicit, tagNo, obj);
     }
 
-    public BERTaggedObject(boolean explicit, int tagClass, int tagNo, ASN1Encodable obj)
+    /**
+     * create an implicitly tagged object that contains a zero
+     * length sequence.
+     */
+    public BERTaggedObject(
+        int             tagNo)
     {
-        super(explicit, tagClass, tagNo, obj);
+        super(false, tagNo, new BERSequence());
     }
 
-    BERTaggedObject(int explicitness, int tagClass, int tagNo, ASN1Encodable obj)
+    boolean isConstructed()
     {
-        super(explicitness, tagClass, tagNo, obj);
+        return explicit || obj.toASN1Primitive().isConstructed();
     }
 
-    boolean encodeConstructed()
-    {
-        return isExplicit() || obj.toASN1Primitive().encodeConstructed();
-    }
-
-    int encodedLength(boolean withTag) throws IOException
+    int encodedLength()
+        throws IOException
     {
         ASN1Primitive primitive = obj.toASN1Primitive();
-        boolean explicit = isExplicit();
-
-        int length = primitive.encodedLength(explicit);
+        int length = primitive.encodedLength();
 
         if (explicit)
         {
-            length += 3;
+            return StreamUtil.calculateTagLength(tagNo) + StreamUtil.calculateBodyLength(length) + length;
         }
+        else
+        {
+            // header length already in calculation
+            length = length - 1;
 
-        length += withTag ? ASN1OutputStream.getLengthOfIdentifier(tagNo) : 0;
-
-        return length;
+            return StreamUtil.calculateTagLength(tagNo) + length;
+        }
     }
 
     void encode(ASN1OutputStream out, boolean withTag) throws IOException
     {
-//        assert out.getClass().isAssignableFrom(ASN1OutputStream.class);
+        out.writeTag(withTag, BERTags.CONSTRUCTED | BERTags.TAGGED, tagNo);
+        out.write(0x80);
 
-        ASN1Primitive primitive = obj.toASN1Primitive();
-        boolean explicit = isExplicit();
-
-        if (withTag)
+        if (!explicit)
         {
-            int flags = tagClass;
-            if (explicit || primitive.encodeConstructed())
+            Enumeration e;
+            if (obj instanceof ASN1OctetString)
             {
-                flags |= BERTags.CONSTRUCTED;
+                if (obj instanceof BEROctetString)
+                {
+                    e = ((BEROctetString)obj).getObjects();
+                }
+                else
+                {
+                    ASN1OctetString octs = (ASN1OctetString)obj;
+                    BEROctetString berO = new BEROctetString(octs.getOctets());
+                    e = berO.getObjects();
+                }
+            }
+            else if (obj instanceof ASN1Sequence)
+            {
+                e = ((ASN1Sequence)obj).getObjects();
+            }
+            else if (obj instanceof ASN1Set)
+            {
+                e = ((ASN1Set)obj).getObjects();
+            }
+            else
+            {
+                throw new ASN1Exception("not implemented: " + obj.getClass().getName());
             }
 
-            out.writeIdentifier(true, flags, tagNo);
-        }
-
-        if (explicit)
-        {
-            out.write(0x80);
-            primitive.encode(out, true);
-            out.write(0x00);
-            out.write(0x00);
+            out.writeElements(e);
         }
         else
         {
-            primitive.encode(out, false);
+            out.writePrimitive(obj.toASN1Primitive(), true);
         }
-    }
 
-    ASN1Sequence rebuildConstructed(ASN1Primitive primitive)
-    {
-        return new BERSequence(primitive);
-    }
+        out.write(0x00);
+        out.write(0x00);
 
-    ASN1TaggedObject replaceTag(int tagClass, int tagNo)
-    {
-        return new BERTaggedObject(explicitness, tagClass, tagNo, obj);
+//        ASN1Primitive primitive = obj.toASN1Primitive();
+//
+//        int flags = BERTags.TAGGED;
+//        if (explicit || primitive.isConstructed())
+//        {
+//            flags |= BERTags.CONSTRUCTED;
+//        }
+//
+//        out.writeTag(withTag, flags, tagNo);
+//
+//        if (explicit)
+//        {
+//            out.write(0x80);
+//            out.writePrimitive(obj.toASN1Primitive(), true);
+//            out.write(0x00);
+//            out.write(0x00);
+//        }
+//        else
+//        {
+//            out.writePrimitive(obj.toASN1Primitive(), false);
+//        }
     }
 }

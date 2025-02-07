@@ -14,7 +14,6 @@ import com.android.internal.org.bouncycastle.crypto.params.ParametersWithRandom;
 // import org.bouncycastle.crypto.util.DigestFactory;
 import com.android.internal.org.bouncycastle.crypto.digests.AndroidDigestFactory;
 import com.android.internal.org.bouncycastle.util.Arrays;
-import com.android.internal.org.bouncycastle.util.Pack;
 
 /**
  * Optimal Asymmetric Encryption Padding (OAEP) - see PKCS 1 V 2.
@@ -228,9 +227,7 @@ public class OAEPEncoding
         // on encryption, we need to make sure our decrypted block comes back
         // the same size.
         //
-
-        // i.e. wrong when block.length < (2 * defHash.length) + 1
-        int wrongMask = (block.length - ((2 * defHash.length) + 1)) >> 31;
+        boolean wrongData = (block.length < (2 * defHash.length) + 1);
 
         if (data.length <= block.length)
         {
@@ -239,7 +236,7 @@ public class OAEPEncoding
         else
         {
             System.arraycopy(data, 0, block, 0, block.length);
-            wrongMask |= 1;
+            wrongData = true;
         }
 
         //
@@ -267,37 +264,38 @@ public class OAEPEncoding
         // check the hash of the encoding params.
         // long check to try to avoid this been a source of a timing attack.
         //
+        boolean defHashWrong = false;
+
         for (int i = 0; i != defHash.length; i++)
         {
-            wrongMask |= defHash[i] ^ block[defHash.length + i];
+            if (defHash[i] != block[defHash.length + i])
+            {
+                defHashWrong = true;
+            }
         }
 
         //
         // find the data block
         //
-        int start = -1;
+        int start = block.length;
 
         for (int index = 2 * defHash.length; index != block.length; index++)
         {
-            int octet = block[index] & 0xFF;
-
-            // i.e. mask will be 0xFFFFFFFF if octet is non-zero and start is (still) negative, else 0.
-            int shouldSetMask = (-octet & start) >> 31;
-
-            start += index & shouldSetMask;
+            if (block[index] != 0 & start == block.length)
+            {
+                start = index;
+            }
         }
 
-        wrongMask |= start >> 31;
-        ++start;
-        wrongMask |= block[start] ^ 1;
+        boolean dataStartWrong = (start > (block.length - 1) | block[start] != 1);
 
-        if (wrongMask != 0)
+        start++;
+
+        if (defHashWrong | wrongData | dataStartWrong)
         {
             Arrays.fill(block, (byte)0);
             throw new InvalidCipherTextException("data wrong");
         }
-
-        ++start;
 
         //
         // extract the data block
@@ -308,6 +306,19 @@ public class OAEPEncoding
         Arrays.fill(block, (byte)0);
 
         return output;
+    }
+
+    /**
+     * int to octet string.
+     */
+    private void ItoOSP(
+        int     i,
+        byte[]  sp)
+    {
+        sp[0] = (byte)(i >>> 24);
+        sp[1] = (byte)(i >>> 16);
+        sp[2] = (byte)(i >>> 8);
+        sp[3] = (byte)(i >>> 0);
     }
 
     /**
@@ -328,7 +339,7 @@ public class OAEPEncoding
 
         while (counter < (length / hashBuf.length))
         {
-            Pack.intToBigEndian(counter, C, 0);
+            ItoOSP(counter, C);
 
             mgf1Hash.update(Z, zOff, zLen);
             mgf1Hash.update(C, 0, C.length);
@@ -341,7 +352,7 @@ public class OAEPEncoding
 
         if ((counter * hashBuf.length) < length)
         {
-            Pack.intToBigEndian(counter, C, 0);
+            ItoOSP(counter, C);
 
             mgf1Hash.update(Z, zOff, zLen);
             mgf1Hash.update(C, 0, C.length);

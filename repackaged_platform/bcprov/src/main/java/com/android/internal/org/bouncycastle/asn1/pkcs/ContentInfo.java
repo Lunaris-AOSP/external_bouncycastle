@@ -50,7 +50,7 @@ public class ContentInfo
 
         if (e.hasMoreElements())
         {
-            content = ((ASN1TaggedObject)e.nextElement()).getExplicitBaseObject();
+            content = ((ASN1TaggedObject)e.nextElement()).getObject();
         }
 
         isBer = seq instanceof BERSequence;

@@ -14,14 +14,6 @@ import com.android.org.bouncycastle.util.Properties;
 public class ASN1Integer
     extends ASN1Primitive
 {
-    static final ASN1UniversalType TYPE = new ASN1UniversalType(ASN1Integer.class, BERTags.INTEGER)
-    {
-        ASN1Primitive fromImplicitPrimitive(DEROctetString octetString)
-        {
-            return createPrimitive(octetString.getOctets());
-        }
-    };
-
     static final int SIGN_EXT_SIGNED = 0xFFFFFFFF;
     static final int SIGN_EXT_UNSIGNED = 0xFF;
 
@@ -47,7 +39,7 @@ public class ASN1Integer
         {
             try
             {
-                return (ASN1Integer)TYPE.fromByteArray((byte[])obj);
+                return (ASN1Integer)fromByteArray((byte[])obj);
             }
             catch (Exception e)
             {
@@ -61,16 +53,27 @@ public class ASN1Integer
     /**
      * Return an Integer from a tagged object.
      *
-     * @param taggedObject the tagged object holding the object we want
+     * @param obj      the tagged object holding the object we want
      * @param explicit true if the object is meant to be explicitly
      *                 tagged false otherwise.
      * @return an ASN1Integer instance.
      * @throws IllegalArgumentException if the tagged object cannot
      * be converted.
      */
-    public static ASN1Integer getInstance(ASN1TaggedObject taggedObject, boolean explicit)
+    public static ASN1Integer getInstance(
+        ASN1TaggedObject obj,
+        boolean explicit)
     {
-        return (ASN1Integer)TYPE.getContextInstance(taggedObject, explicit);
+        ASN1Primitive o = obj.getObject();
+
+        if (explicit || o instanceof ASN1Integer)
+        {
+            return getInstance(o);
+        }
+        else
+        {
+            return new ASN1Integer(ASN1OctetString.getInstance(o).getOctets());
+        }
     }
 
     /**
@@ -150,18 +153,6 @@ public class ASN1Integer
         return new BigInteger(bytes);
     }
 
-    public boolean hasValue(int x)
-    {
-        return (bytes.length - start) <= 4
-            && intValue(bytes, start, SIGN_EXT_SIGNED) == x;
-    }
-
-    public boolean hasValue(long x)
-    {
-        return (bytes.length - start) <= 8
-            && longValue(bytes, start, SIGN_EXT_SIGNED) == x;
-    }
-
     public boolean hasValue(BigInteger x)
     {
         return null != x
@@ -203,19 +194,19 @@ public class ASN1Integer
         return longValue(bytes, start, SIGN_EXT_SIGNED);
     }
 
-    boolean encodeConstructed()
+    boolean isConstructed()
     {
         return false;
     }
 
-    int encodedLength(boolean withTag)
+    int encodedLength()
     {
-        return ASN1OutputStream.getLengthOfEncodingDL(withTag, bytes.length);
+        return 1 + StreamUtil.calculateBodyLength(bytes.length) + bytes.length;
     }
 
     void encode(ASN1OutputStream out, boolean withTag) throws IOException
     {
-        out.writeEncodingDL(withTag, BERTags.INTEGER, bytes);
+        out.writeEncoded(withTag, BERTags.INTEGER, bytes);
     }
 
     public int hashCode()
@@ -238,11 +229,6 @@ public class ASN1Integer
     public String toString()
     {
         return getValue().toString();
-    }
-
-    static ASN1Integer createPrimitive(byte[] contents)
-    {
-        return new ASN1Integer(contents, false);
     }
 
     static int intValue(byte[] bytes, int start, int signExt)

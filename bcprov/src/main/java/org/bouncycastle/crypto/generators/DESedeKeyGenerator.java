@@ -1,9 +1,6 @@
 package org.bouncycastle.crypto.generators;
 
-import org.bouncycastle.crypto.CryptoServicePurpose;
-import org.bouncycastle.crypto.CryptoServicesRegistrar;
 import org.bouncycastle.crypto.KeyGenerationParameters;
-import org.bouncycastle.crypto.constraints.DefaultServiceProperties;
 import org.bouncycastle.crypto.params.DESedeParameters;
 
 public class DESedeKeyGenerator
@@ -42,8 +39,6 @@ public class DESedeKeyGenerator
                 + (2 * 8 * DESedeParameters.DES_KEY_LENGTH)
                 + " bits long.");
         }
-
-        CryptoServicesRegistrar.checkConstraints(new DefaultServiceProperties("DESedeKeyGen", 112, null, CryptoServicePurpose.KEYGEN));
     }
 
     public byte[] generateKey()

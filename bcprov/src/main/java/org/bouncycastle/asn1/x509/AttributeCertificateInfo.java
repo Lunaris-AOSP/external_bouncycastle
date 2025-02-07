@@ -1,6 +1,5 @@
 package org.bouncycastle.asn1.x509;
 
-import org.bouncycastle.asn1.ASN1BitString;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Integer;
@@ -8,6 +7,7 @@ import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1TaggedObject;
+import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DERSequence;
 
 public class AttributeCertificateInfo
@@ -17,10 +17,10 @@ public class AttributeCertificateInfo
     private Holder                  holder;
     private AttCertIssuer           issuer;
     private AlgorithmIdentifier     signature;
-    private ASN1Integer             serialNumber;
+    private ASN1Integer              serialNumber;
     private AttCertValidityPeriod   attrCertValidityPeriod;
     private ASN1Sequence            attributes;
-    private ASN1BitString           issuerUniqueID;
+    private DERBitString            issuerUniqueID;
     private Extensions              extensions;
 
     public static AttributeCertificateInfo getInstance(
@@ -76,9 +76,9 @@ public class AttributeCertificateInfo
         {
             ASN1Encodable    obj = seq.getObjectAt(i);
 
-            if (obj instanceof ASN1BitString)
+            if (obj instanceof DERBitString)
             {
-                this.issuerUniqueID = ASN1BitString.getInstance(seq.getObjectAt(i));
+                this.issuerUniqueID = DERBitString.getInstance(seq.getObjectAt(i));
             }
             else if (obj instanceof ASN1Sequence || obj instanceof Extensions)
             {
@@ -122,7 +122,7 @@ public class AttributeCertificateInfo
         return attributes;
     }
 
-    public ASN1BitString getIssuerUniqueID()
+    public DERBitString getIssuerUniqueID()
     {
         return issuerUniqueID;
     }
@@ -154,7 +154,7 @@ public class AttributeCertificateInfo
     {
         ASN1EncodableVector v = new ASN1EncodableVector(9);
 
-        if (!version.hasValue(0))
+        if (version.intValueExact() != 0)
         {
             v.add(version);
         }

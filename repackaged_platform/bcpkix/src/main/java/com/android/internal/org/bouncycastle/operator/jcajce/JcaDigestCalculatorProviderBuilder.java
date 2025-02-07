@@ -9,7 +9,6 @@ import java.security.Provider;
 
 import com.android.internal.org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import com.android.internal.org.bouncycastle.jcajce.util.DefaultJcaJceHelper;
-import com.android.internal.org.bouncycastle.jcajce.util.JcaJceHelper;
 import com.android.internal.org.bouncycastle.jcajce.util.NamedJcaJceHelper;
 import com.android.internal.org.bouncycastle.jcajce.util.ProviderJcaJceHelper;
 import com.android.internal.org.bouncycastle.operator.DigestCalculator;
@@ -25,14 +24,6 @@ public class JcaDigestCalculatorProviderBuilder
 
     public JcaDigestCalculatorProviderBuilder()
     {
-    }
-
-
-    public JcaDigestCalculatorProviderBuilder setHelper(JcaJceHelper helper)
-    {
-        this.helper = new OperatorHelper(helper);
-
-        return this;
     }
 
     public JcaDigestCalculatorProviderBuilder setProvider(Provider provider)
@@ -76,7 +67,7 @@ public class JcaDigestCalculatorProviderBuilder
                     {
                         return algorithm;
                     }
-
+                    
                     public OutputStream getOutputStream()
                     {
                         return stream;
@@ -91,7 +82,7 @@ public class JcaDigestCalculatorProviderBuilder
         };
     }
 
-    private static class DigestOutputStream
+    private class DigestOutputStream
         extends OutputStream
     {
         private MessageDigest dig;
@@ -110,13 +101,13 @@ public class JcaDigestCalculatorProviderBuilder
         public void write(byte[] bytes)
             throws IOException
         {
-            dig.update(bytes);
+           dig.update(bytes);
         }
 
         public void write(int b)
             throws IOException
         {
-            dig.update((byte)b);
+           dig.update((byte)b);
         }
 
         byte[] getDigest()

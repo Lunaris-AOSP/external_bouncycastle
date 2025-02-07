@@ -68,8 +68,6 @@ public class DSASigner
             this.key = (DSAPublicKeyParameters)param;
         }
 
-        CryptoServicesRegistrar.checkConstraints(Utils.getDefaultProperties("DSA", key, forSigning));
-
         this.random = initSecureRandom(forSigning && !kCalculator.isDeterministic(), providedRandom);
     }
 

@@ -22,8 +22,8 @@ public class CRLBag
     private CRLBag(
         ASN1Sequence seq)
     {
-        this.crlId = ASN1ObjectIdentifier.getInstance(seq.getObjectAt(0));
-        this.crlValue = ASN1TaggedObject.getInstance(seq.getObjectAt(1)).getExplicitBaseObject();
+        this.crlId = (ASN1ObjectIdentifier)seq.getObjectAt(0);
+        this.crlValue = ((ASN1TaggedObject)seq.getObjectAt(1)).getObject();
     }
 
     public static CRLBag getInstance(Object o)
@@ -67,7 +67,7 @@ public class CRLBag
      *
      * x509CRL BAG-TYPE ::= {OCTET STRING IDENTIFIED BY {certTypes 1}
      * -- DER-encoded X.509 CRL stored in OCTET STRING
-     *
+	 *
      * CRLTypes BAG-TYPE ::= {
      * x509CRL,
      * ... -- For future extensions

@@ -11,8 +11,8 @@ import java.util.Set;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.DERTaggedObject;
+import org.bouncycastle.asn1.cms.CMSObjectIdentifiers;
 // Android-removed: Unsupported algorithms
-// import org.bouncycastle.asn1.cms.CMSObjectIdentifiers;
 // import org.bouncycastle.asn1.cms.OtherRevocationInfoFormat;
 // import org.bouncycastle.asn1.cryptopro.CryptoProObjectIdentifiers;
 import org.bouncycastle.asn1.nist.NISTObjectIdentifiers;
@@ -26,8 +26,6 @@ import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
 import org.bouncycastle.cert.X509AttributeCertificateHolder;
 import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
-import org.bouncycastle.operator.DigestAlgorithmIdentifierFinder;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.Store;
 
@@ -36,6 +34,7 @@ public class CMSSignedGenerator
     /**
      * Default type for the signed data.
      */
+    public static final String  DATA = CMSObjectIdentifiers.data.getId();
     
     public static final String  DIGEST_SHA1 = OIWObjectIdentifiers.idSHA1.getId();
     public static final String  DIGEST_SHA224 = NISTObjectIdentifiers.id_sha224.getId();
@@ -44,7 +43,6 @@ public class CMSSignedGenerator
     public static final String  DIGEST_SHA512 = NISTObjectIdentifiers.id_sha512.getId();
     public static final String  DIGEST_MD5 = PKCSObjectIdentifiers.md5.getId();
     // BEGIN Android-removed: Unsupported algorithms
-    // public static final String  DATA = CMSObjectIdentifiers.data.getId();
     // public static final String  DIGEST_GOST3411 = CryptoProObjectIdentifiers.gostR3411.getId();
     // public static final String  DIGEST_RIPEMD128 = TeleTrusTObjectIdentifiers.ripemd128.getId();
     // public static final String  DIGEST_RIPEMD160 = TeleTrusTObjectIdentifiers.ripemd160.getId();
@@ -94,19 +92,11 @@ public class CMSSignedGenerator
     protected List signerGens = new ArrayList();
     protected Map digests = new HashMap();
 
-    protected DigestAlgorithmIdentifierFinder digestAlgIdFinder;
-
     /**
      * base constructor
      */
     protected CMSSignedGenerator()
     {
-        this(new DefaultDigestAlgorithmIdentifierFinder());
-    }
-
-    protected CMSSignedGenerator(DigestAlgorithmIdentifierFinder digestAlgIdFinder)
-    {
-        this.digestAlgIdFinder = digestAlgIdFinder;
     }
 
     protected Map getBaseParameters(ASN1ObjectIdentifier contentType, AlgorithmIdentifier digAlgId, byte[] hash)
@@ -205,9 +195,7 @@ public class CMSSignedGenerator
         ASN1ObjectIdentifier   otherRevocationInfoFormat,
         ASN1Encodable          otherRevocationInfo)
     {
-        OtherRevocationInfoFormat infoFormat = new OtherRevocationInfoFormat(otherRevocationInfoFormat, otherRevocationInfo);
-        CMSUtils.validateInfoFormat(infoFormat);
-        crls.add(new DERTaggedObject(false, 1, infoFormat));
+        crls.add(new DERTaggedObject(false, 1, new OtherRevocationInfoFormat(otherRevocationInfoFormat, otherRevocationInfo)));
     }
 
     /**

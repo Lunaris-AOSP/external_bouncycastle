@@ -2,6 +2,7 @@
 package com.android.internal.org.bouncycastle.jce.provider;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import java.security.cert.CertPath;
@@ -2098,12 +2099,18 @@ class RFC3280CertPathUtilities
             throw new ExtCertPathValidatorException("Basic constraints extension cannot be decoded.", e, certPath,
                 index);
         }
-        if (bc != null && bc.isCA())  // if there is a path len constraint and we're not a CA, ignore it! (yes, it happens).
+        if (bc != null)
         {
-            ASN1Integer pathLenConstraint = bc.getPathLenConstraintInteger();
-            if (pathLenConstraint != null)
+            BigInteger _pathLengthConstraint = bc.getPathLenConstraint();
+
+            if (_pathLengthConstraint != null)
             {
-                maxPathLength = Math.min(maxPathLength, pathLenConstraint.intPositiveValueExact());
+                int _plc = _pathLengthConstraint.intValue();
+
+                if (_plc < maxPathLength)
+                {
+                    return _plc;
+                }
             }
         }
         return maxPathLength;

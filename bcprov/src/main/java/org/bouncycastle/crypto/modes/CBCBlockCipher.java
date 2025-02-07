@@ -3,7 +3,6 @@ package org.bouncycastle.crypto.modes;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.DataLengthException;
-import org.bouncycastle.crypto.DefaultMultiBlockCipher;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 import org.bouncycastle.util.Arrays;
 
@@ -11,8 +10,7 @@ import org.bouncycastle.util.Arrays;
  * implements Cipher-Block-Chaining (CBC) mode on top of a simple cipher.
  */
 public class CBCBlockCipher
-    extends DefaultMultiBlockCipher
-    implements CBCModeCipher
+    implements BlockCipher
 {
     private byte[]          IV;
     private byte[]          cbcV;
@@ -23,20 +21,9 @@ public class CBCBlockCipher
     private boolean         encrypting;
 
     /**
-     * Return a new CBC mode cipher based on the passed in base cipher
-     *
-     * @param cipher the base cipher for the CBC mode.
-     */
-    public static CBCModeCipher newInstance(BlockCipher cipher)
-    {
-        return new CBCBlockCipher(cipher);
-    }
-
-    /**
      * Basic constructor.
      *
      * @param cipher the block cipher to be used as the basis of chaining.
-     * @deprecated use the CBCBlockCipher.newInstance() static method.
      */
     public CBCBlockCipher(
         BlockCipher cipher)
@@ -90,23 +77,31 @@ public class CBCBlockCipher
 
             System.arraycopy(iv, 0, IV, 0, iv.length);
 
-            params = ivParam.getParameters();
+            reset();
+
+            // if null it's an IV changed only.
+            if (ivParam.getParameters() != null)
+            {
+                cipher.init(encrypting, ivParam.getParameters());
+            }
+            else if (oldEncrypting != encrypting)
+            {
+                throw new IllegalArgumentException("cannot change encrypting state without providing key.");
+            }
         }
         else
         {
-            Arrays.fill(IV, (byte)0);
-        }
+            reset();
 
-        reset();
-
-        // if null it's an IV changed only (key is to be reused).
-        if (params != null)
-        {
-            cipher.init(encrypting, params);
-        }
-        else if (oldEncrypting != encrypting)
-        {
-            throw new IllegalArgumentException("cannot change encrypting state without providing key.");
+            // if it's null, key is to be reused.
+            if (params != null)
+            {
+                cipher.init(encrypting, params);
+            }
+            else if (oldEncrypting != encrypting)
+            {
+                throw new IllegalArgumentException("cannot change encrypting state without providing key.");
+            }
         }
     }
 

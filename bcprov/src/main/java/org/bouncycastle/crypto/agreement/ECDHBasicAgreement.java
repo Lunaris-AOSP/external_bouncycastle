@@ -4,7 +4,6 @@ import java.math.BigInteger;
 
 import org.bouncycastle.crypto.BasicAgreement;
 import org.bouncycastle.crypto.CipherParameters;
-import org.bouncycastle.crypto.CryptoServicesRegistrar;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
@@ -35,8 +34,6 @@ public class ECDHBasicAgreement
         CipherParameters key)
     {
         this.key = (ECPrivateKeyParameters)key;
-
-        CryptoServicesRegistrar.checkConstraints(Utils.getDefaultProperties("ECDH", this.key));
     }
 
     public int getFieldSize()

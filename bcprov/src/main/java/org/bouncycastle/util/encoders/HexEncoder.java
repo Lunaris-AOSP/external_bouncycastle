@@ -62,16 +62,6 @@ public class HexEncoder
         return outPos - outOff;
     }
 
-    public int getEncodedLength(int inputLength)
-    {
-        return inputLength * 2;
-    }
-
-    public int getMaxDecodedLength(int inputLength)
-    {
-        return inputLength / 2;
-    }
-
     /**
      * encode the input data producing a Hex output stream.
      *
@@ -80,20 +70,14 @@ public class HexEncoder
     public int encode(byte[] buf, int off, int len, OutputStream out) 
         throws IOException
     {
-        if (len < 0)
-        {
-            return 0;
-        }
-
         byte[] tmp = new byte[72];
-        int remaining = len;
-        while (remaining > 0)
+        while (len > 0)
         {
-            int inLen = Math.min(36, remaining);
+            int inLen = Math.min(36, len);
             int outLen = encode(buf, off, inLen, tmp, 0);
             out.write(tmp, 0, outLen);
             off += inLen;
-            remaining -= inLen;
+            len -= inLen;
         }
         return len * 2;
     }

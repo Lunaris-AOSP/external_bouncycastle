@@ -3,8 +3,6 @@ package com.android.org.bouncycastle.asn1.x509;
 
 import com.android.org.bouncycastle.asn1.ASN1EncodableVector;
 import com.android.org.bouncycastle.asn1.ASN1Integer;
-import com.android.org.bouncycastle.asn1.ASN1Object;
-import com.android.org.bouncycastle.asn1.ASN1Sequence;
 import com.android.org.bouncycastle.asn1.ASN1UTCTime;
 import com.android.org.bouncycastle.asn1.DERBitString;
 import com.android.org.bouncycastle.asn1.DERSequence;
@@ -167,34 +165,21 @@ public class V3TBSCertificateGenerator
         }
     }
 
-    public ASN1Sequence generatePreTBSCertificate()
+    @android.compat.annotation.UnsupportedAppUsage
+    public TBSCertificate generateTBSCertificate()
     {
-        if (signature != null)
-        {
-            throw new IllegalStateException("signature field should not be set in PreTBSCertificate");
-        }
-        if ((serialNumber == null)
+        if ((serialNumber == null) || (signature == null)
             || (issuer == null) || (startDate == null) || (endDate == null)
             || (subject == null && !altNamePresentAndCritical) || (subjectPublicKeyInfo == null))
         {
             throw new IllegalStateException("not all mandatory fields set in V3 TBScertificate generator");
         }
 
-        return generateTBSStructure();
-    }
-
-    private ASN1Sequence generateTBSStructure()
-    {
         ASN1EncodableVector v = new ASN1EncodableVector(10);
 
         v.add(version);
         v.add(serialNumber);
-
-        if (signature != null)
-        {
-            v.add(signature);
-        }
-        
+        v.add(signature);
         v.add(issuer);
 
         //
@@ -234,19 +219,6 @@ public class V3TBSCertificateGenerator
             v.add(new DERTaggedObject(true, 3, extensions));
         }
 
-        return new DERSequence(v);
-    }
-
-    @android.compat.annotation.UnsupportedAppUsage
-    public TBSCertificate generateTBSCertificate()
-    {
-        if ((serialNumber == null) || (signature == null)
-            || (issuer == null) || (startDate == null) || (endDate == null)
-            || (subject == null && !altNamePresentAndCritical) || (subjectPublicKeyInfo == null))
-        {
-            throw new IllegalStateException("not all mandatory fields set in V3 TBScertificate generator");
-        }
-
-        return TBSCertificate.getInstance(generateTBSStructure());
+        return TBSCertificate.getInstance(new DERSequence(v));
     }
 }

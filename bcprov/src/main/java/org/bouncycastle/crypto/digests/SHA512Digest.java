@@ -1,8 +1,5 @@
 package org.bouncycastle.crypto.digests;
 
-import org.bouncycastle.crypto.CryptoServiceProperties;
-import org.bouncycastle.crypto.CryptoServicePurpose;
-import org.bouncycastle.crypto.CryptoServicesRegistrar;
 import org.bouncycastle.util.Memoable;
 import org.bouncycastle.util.Pack;
 
@@ -28,19 +25,6 @@ public class SHA512Digest
      */
     public SHA512Digest()
     {
-        this(CryptoServicePurpose.ANY);
-    }
-
-    /**
-     * Standard constructor, with purpose
-     */
-    public SHA512Digest(CryptoServicePurpose purpose)
-    {
-        super(purpose);
-
-        CryptoServicesRegistrar.checkConstraints(cryptoServiceProperties());
-
-        reset();
     }
 
     /**
@@ -50,8 +34,6 @@ public class SHA512Digest
     public SHA512Digest(SHA512Digest t)
     {
         super(t);
-
-        CryptoServicesRegistrar.checkConstraints(cryptoServiceProperties());
     }
 
     /**
@@ -61,11 +43,7 @@ public class SHA512Digest
      */
     public SHA512Digest(byte[] encodedState)
     {
-        super(CryptoServicePurpose.values()[encodedState[encodedState.length - 1]]);
-
         restoreState(encodedState);
-
-        CryptoServicesRegistrar.checkConstraints(cryptoServiceProperties());
     }
 
     public String getAlgorithmName()
@@ -133,17 +111,9 @@ public class SHA512Digest
 
     public byte[] getEncodedState()
     {
-        byte[] encoded = new byte[getEncodedStateSize() + 1];
+        byte[] encoded = new byte[getEncodedStateSize()];
         super.populateState(encoded);
-
-        encoded[encoded.length - 1] = (byte)purpose.ordinal();
-
         return encoded;
-    }
-
-    protected CryptoServiceProperties cryptoServiceProperties()
-    {
-        return Utils.getDefaultProperties(this, 256, purpose);
     }
 }
 

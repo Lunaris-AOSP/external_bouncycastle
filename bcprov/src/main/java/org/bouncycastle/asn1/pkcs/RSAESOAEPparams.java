@@ -58,7 +58,11 @@ public class RSAESOAEPparams
         this.pSourceAlgorithm = pSourceAlgorithm;
     }
 
-    private RSAESOAEPparams(
+    /**
+     * @deprecated use getInstance()
+     * @param seq
+     */
+    public RSAESOAEPparams(
         ASN1Sequence seq)
     {
         hashAlgorithm = DEFAULT_HASH_ALGORITHM;

@@ -2,11 +2,9 @@ package org.bouncycastle.jcajce.provider.asymmetric.ec;
 
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
-import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECParameterSpec;
-import java.util.Map;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.DERNull;
@@ -16,7 +14,6 @@ import org.bouncycastle.asn1.x9.X9ECPoint;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.jcajce.provider.asymmetric.util.EC5Util;
 import org.bouncycastle.jcajce.provider.asymmetric.util.ECUtil;
-import org.bouncycastle.jcajce.provider.config.ProviderConfiguration;
 import org.bouncycastle.jce.spec.ECNamedCurveSpec;
 import org.bouncycastle.math.ec.ECCurve;
 
@@ -29,49 +26,39 @@ class ECUtils
         return (key instanceof BCECPublicKey) ? ((BCECPublicKey)key).engineGetKeyParameters() : ECUtil.generatePublicKeyParameter(key);
     }
 
-    static AsymmetricKeyParameter generatePrivateKeyParameter(
-            PrivateKey key)
-        throws InvalidKeyException
+    static X9ECParameters getDomainParametersFromGenSpec(ECGenParameterSpec genSpec)
     {
-        return (key instanceof BCECPrivateKey) ? ((BCECPrivateKey)key).engineGetKeyParameters() : ECUtil.generatePrivateKeyParameter(key);
+        return getDomainParametersFromName(genSpec.getName());
     }
 
-    static X9ECParameters getDomainParametersFromGenSpec(ECGenParameterSpec genSpec, ProviderConfiguration configuration)
+    static X9ECParameters getDomainParametersFromName(String curveName)
     {
-        return getDomainParametersFromName(genSpec.getName(), configuration);
-    }
-
-    static X9ECParameters getDomainParametersFromName(String curveName, ProviderConfiguration configuration)
-    {
-        if (null == curveName || curveName.length() < 1)
+        X9ECParameters domainParameters;
+        try
         {
-            return null;
-        }
-
-        int spacePos = curveName.indexOf(' ');
-        if (spacePos > 0)
-        {
-            curveName = curveName.substring(spacePos + 1);
-        }
-
-        ASN1ObjectIdentifier oid = getOID(curveName);
-        if (null == oid)
-        {
-            return ECUtil.getNamedCurveByName(curveName);
-        }
-
-        X9ECParameters x9 = ECUtil.getNamedCurveByOid(oid);
-        if (null == x9)
-        {
-            if (null != configuration)
+            if (curveName.charAt(0) >= '0' && curveName.charAt(0) <= '2')
             {
-                Map extraCurves = configuration.getAdditionalECParameters();
-
-                x9 = (X9ECParameters)extraCurves.get(oid);
+                ASN1ObjectIdentifier oidID = new ASN1ObjectIdentifier(curveName);
+                domainParameters = ECUtil.getNamedCurveByOid(oidID);
+            }
+            else
+            {
+                if (curveName.indexOf(' ') > 0)
+                {
+                    curveName = curveName.substring(curveName.indexOf(' ') + 1);
+                    domainParameters = ECUtil.getNamedCurveByName(curveName);
+                }
+                else
+                {
+                    domainParameters = ECUtil.getNamedCurveByName(curveName);
+                }
             }
         }
-
-        return x9;
+        catch (IllegalArgumentException ex)
+        {
+            domainParameters = ECUtil.getNamedCurveByName(curveName);
+        }
+        return domainParameters;
     }
 
     static X962Parameters getDomainParametersFromName(ECParameterSpec ecSpec, boolean withCompression)
@@ -106,21 +93,5 @@ class ECUtils
         }
 
         return params;
-    }
-
-    private static ASN1ObjectIdentifier getOID(String curveName)
-    {
-        char firstChar = curveName.charAt(0);
-        if (firstChar >= '0' && firstChar <= '2')
-        {
-            try
-            {
-                return new ASN1ObjectIdentifier(curveName);
-            }
-            catch (Exception e)
-            {
-            }
-        }
-        return null;
     }
 }

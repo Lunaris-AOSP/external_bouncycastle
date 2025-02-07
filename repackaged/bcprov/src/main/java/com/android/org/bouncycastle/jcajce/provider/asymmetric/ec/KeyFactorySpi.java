@@ -241,11 +241,7 @@ public class KeyFactorySpi
 
             try
             {
-                return new BCECPrivateKey(algorithm,
-                    new PrivateKeyInfo(
-                        new AlgorithmIdentifier(X9ObjectIdentifiers.id_ecPublicKey, ecKey.getParametersObject()),
-                        ecKey),
-                    configuration);
+                return new BCECPrivateKey(algorithm, new PrivateKeyInfo(new AlgorithmIdentifier(X9ObjectIdentifiers.id_ecPublicKey, ecKey.getParameters()), ecKey), configuration);
             }
             catch (IOException e)
             {

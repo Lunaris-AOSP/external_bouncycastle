@@ -1,7 +1,6 @@
 /* GENERATED SOURCE. DO NOT MODIFY. */
 package com.android.internal.org.bouncycastle.jcajce.provider.asymmetric.x509;
 
-import java.io.IOException;
 import java.security.cert.CRLException;
 
 import com.android.internal.org.bouncycastle.asn1.ASN1BitString;
@@ -11,7 +10,6 @@ import com.android.internal.org.bouncycastle.asn1.x509.CertificateList;
 import com.android.internal.org.bouncycastle.asn1.x509.Extension;
 import com.android.internal.org.bouncycastle.asn1.x509.IssuingDistributionPoint;
 import com.android.internal.org.bouncycastle.jcajce.util.JcaJceHelper;
-import com.android.internal.org.bouncycastle.util.Arrays;
 
 class X509CRLObject
     extends X509CRLImpl
@@ -25,11 +23,6 @@ class X509CRLObject
     X509CRLObject(JcaJceHelper bcHelper, CertificateList c) throws CRLException
     {
         super(bcHelper, c, createSigAlgName(c), createSigAlgParams(c), isIndirectCRL(c));
-    }
-
-    public byte[] getEncoded() throws CRLException
-    {
-        return Arrays.clone(getInternalCRL().getEncoded());
     }
 
     public boolean equals(Object other)
@@ -58,8 +51,6 @@ class X509CRLObject
                     return false;
                 }
             }
-
-            return getInternalCRL().equals(otherBC.getInternalCRL());
         }
 
         return getInternalCRL().equals(other);
@@ -86,19 +77,17 @@ class X509CRLObject
             }
         }
 
-        byte[] encoding = null;
-        CRLException exception = null;
+        byte[] encoding;
         try
         {
-            encoding = c.getEncoded(ASN1Encoding.DER);
+            encoding = getEncoded();
         }
-        catch (IOException e)
+        catch (CRLException e)
         {
-            exception = new X509CRLException(e);
+            encoding = null;
         }
 
-        X509CRLInternal temp = new X509CRLInternal(bcHelper, c, sigAlgName,sigAlgParams, isIndirect, encoding,
-            exception);
+        X509CRLInternal temp = new X509CRLInternal(bcHelper, c, sigAlgName,sigAlgParams, isIndirect, encoding);
 
         synchronized (cacheLock)
         {
@@ -119,7 +108,7 @@ class X509CRLObject
         }
         catch (Exception e)
         {
-            throw new X509CRLException("CRL contents invalid: " + e.getMessage(), e);
+            throw new CRLException("CRL contents invalid: " + e);
         }
     }
 
@@ -156,28 +145,6 @@ class X509CRLObject
         catch (Exception e)
         {
             throw new ExtCRLException("Exception reading IssuingDistributionPoint", e);
-        }
-    }
-
-    private static class X509CRLException
-        extends CRLException
-    {
-        private final Throwable cause;
-
-        X509CRLException(String msg, Throwable cause)
-        {
-            super(msg);
-            this.cause = cause;
-        }
-
-        X509CRLException(Throwable cause)
-        {
-            this.cause = cause;
-        }
-
-        public Throwable getCause()
-        {
-            return cause;
         }
     }
 }

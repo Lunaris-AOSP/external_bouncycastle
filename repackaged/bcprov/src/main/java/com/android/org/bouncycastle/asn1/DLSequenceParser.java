@@ -6,7 +6,7 @@ import java.io.IOException;
 /**
  * Parser class for DL SEQUENCEs.
  *
- * @deprecated Check for 'ASN1SequenceParser' instead
+ * TODO The class is only publicly visible to support 'instanceof' checks; provide an alternative
  * @hide This class is not part of the Android public SDK API
  */
 public class DLSequenceParser
@@ -40,7 +40,7 @@ public class DLSequenceParser
     public ASN1Primitive getLoadedObject()
         throws IOException
     {
-         return DLFactory.createSequence(_parser.readVector());
+         return new DLSequence(_parser.readVector());
     }
 
     /**

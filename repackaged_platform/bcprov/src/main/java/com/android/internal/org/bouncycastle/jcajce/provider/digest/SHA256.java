@@ -30,14 +30,14 @@ public class SHA256
     {
         public Digest()
         {
-            super(SHA256Digest.newInstance());
+            super(new SHA256Digest());
         }
 
         public Object clone()
             throws CloneNotSupportedException
         {
             Digest d = (Digest)super.clone();
-            d.digest = SHA256Digest.newInstance(digest);
+            d.digest = new SHA256Digest((SHA256Digest)digest);
 
             return d;
         }
@@ -51,7 +51,7 @@ public class SHA256
     {
         public HashMac()
         {
-            super(new HMac(SHA256Digest.newInstance()));
+            super(new HMac(new SHA256Digest()));
         }
     }
 

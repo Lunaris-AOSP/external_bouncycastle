@@ -4,12 +4,8 @@ package com.android.internal.org.bouncycastle.cms;
 import com.android.internal.org.bouncycastle.asn1.DEROctetString;
 import com.android.internal.org.bouncycastle.asn1.cms.IssuerAndSerialNumber;
 import com.android.internal.org.bouncycastle.asn1.cms.SignerIdentifier;
-import com.android.internal.org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import com.android.internal.org.bouncycastle.cert.X509CertificateHolder;
 import com.android.internal.org.bouncycastle.operator.ContentSigner;
-import com.android.internal.org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
-import com.android.internal.org.bouncycastle.operator.DigestAlgorithmIdentifierFinder;
-import com.android.internal.org.bouncycastle.operator.DigestCalculator;
 import com.android.internal.org.bouncycastle.operator.DigestCalculatorProvider;
 import com.android.internal.org.bouncycastle.operator.OperatorCreationException;
 
@@ -19,14 +15,11 @@ import com.android.internal.org.bouncycastle.operator.OperatorCreationException;
  */
 public class SignerInfoGeneratorBuilder
 {
-    private final DigestAlgorithmIdentifierFinder digAlgFinder = new DefaultDigestAlgorithmIdentifierFinder();
-
     private DigestCalculatorProvider digestProvider;
     private boolean directSignature;
     private CMSAttributeTableGenerator signedGen;
     private CMSAttributeTableGenerator unsignedGen;
     private CMSSignatureEncryptionAlgorithmFinder sigEncAlgFinder;
-    private AlgorithmIdentifier contentDigest;
 
     /**
      *  Base constructor.
@@ -59,18 +52,6 @@ public class SignerInfoGeneratorBuilder
     public SignerInfoGeneratorBuilder setDirectSignature(boolean hasNoSignedAttributes)
     {
         this.directSignature = hasNoSignedAttributes;
-
-        return this;
-    }
-
-    /**
-     * Set the algorithm identifier for the contentDigest to be used for processing the data.
-     *
-     * @return the builder object
-     */
-    public SignerInfoGeneratorBuilder setContentDigest(AlgorithmIdentifier contentDigest)
-    {
-        this.contentDigest = contentDigest;
 
         return this;
     }
@@ -141,19 +122,9 @@ public class SignerInfoGeneratorBuilder
     private SignerInfoGenerator createGenerator(ContentSigner contentSigner, SignerIdentifier sigId)
         throws OperatorCreationException
     {
-        DigestCalculator digester;
-        if (contentDigest != null)
-        {
-            digester = digestProvider.get(contentDigest);
-        }
-        else
-        {
-            digester = digestProvider.get(digAlgFinder.find(contentSigner.getAlgorithmIdentifier()));
-        }
-
         if (directSignature)
         {
-            return new SignerInfoGenerator(sigId, contentSigner, digester.getAlgorithmIdentifier(), sigEncAlgFinder);
+            return new SignerInfoGenerator(sigId, contentSigner, digestProvider, sigEncAlgFinder, true);
         }
 
         if (signedGen != null || unsignedGen != null)
@@ -163,9 +134,9 @@ public class SignerInfoGeneratorBuilder
                 signedGen = new DefaultSignedAttributeTableGenerator();
             }
 
-            return new SignerInfoGenerator(sigId, contentSigner, digester, sigEncAlgFinder, signedGen, unsignedGen);
+            return new SignerInfoGenerator(sigId, contentSigner, digestProvider, sigEncAlgFinder, signedGen, unsignedGen);
         }
         
-        return new SignerInfoGenerator(sigId, contentSigner, digester, sigEncAlgFinder, new DefaultSignedAttributeTableGenerator(), null);
+        return new SignerInfoGenerator(sigId, contentSigner, digestProvider, sigEncAlgFinder);
     }
 }

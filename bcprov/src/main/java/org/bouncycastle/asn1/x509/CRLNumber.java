@@ -5,7 +5,6 @@ import java.math.BigInteger;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1Primitive;
-import org.bouncycastle.util.BigIntegers;
 
 /**
  * The CRLNumber object.
@@ -21,10 +20,6 @@ public class CRLNumber
     public CRLNumber(
         BigInteger number)
     {
-        if (BigIntegers.ZERO.compareTo(number) > 0)
-        {
-            throw new IllegalArgumentException("Invalid CRL number : not in (0..MAX)");
-        }
         this.number = number;
     }
 

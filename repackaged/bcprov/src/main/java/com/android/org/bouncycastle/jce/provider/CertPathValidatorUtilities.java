@@ -45,6 +45,7 @@ import javax.security.auth.x500.X500Principal;
 import com.android.org.bouncycastle.asn1.ASN1Encodable;
 import com.android.org.bouncycastle.asn1.ASN1Enumerated;
 import com.android.org.bouncycastle.asn1.ASN1GeneralizedTime;
+import com.android.org.bouncycastle.asn1.ASN1InputStream;
 import com.android.org.bouncycastle.asn1.ASN1Integer;
 import com.android.org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import com.android.org.bouncycastle.asn1.ASN1OctetString;
@@ -54,6 +55,7 @@ import com.android.org.bouncycastle.asn1.ASN1Sequence;
 import com.android.org.bouncycastle.asn1.ASN1String;
 import com.android.org.bouncycastle.asn1.DEROctetString;
 import com.android.org.bouncycastle.asn1.DERSequence;
+import com.android.org.bouncycastle.asn1.isismtt.ISISMTTObjectIdentifiers;
 import com.android.org.bouncycastle.asn1.x500.X500Name;
 import com.android.org.bouncycastle.asn1.x500.style.RFC4519Style;
 import com.android.org.bouncycastle.asn1.x509.AlgorithmIdentifier;
@@ -67,7 +69,6 @@ import com.android.org.bouncycastle.asn1.x509.GeneralName;
 import com.android.org.bouncycastle.asn1.x509.GeneralNames;
 import com.android.org.bouncycastle.asn1.x509.PolicyInformation;
 import com.android.org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import com.android.org.bouncycastle.internal.asn1.isismtt.ISISMTTObjectIdentifiers;
 import com.android.org.bouncycastle.jcajce.PKIXCRLStore;
 import com.android.org.bouncycastle.jcajce.PKIXCRLStoreSelector;
 import com.android.org.bouncycastle.jcajce.PKIXCertRevocationCheckerParameters;
@@ -83,6 +84,7 @@ import com.android.org.bouncycastle.util.Selector;
 import com.android.org.bouncycastle.util.Store;
 import com.android.org.bouncycastle.util.StoreException;
 import com.android.org.bouncycastle.x509.X509AttributeCertificate;
+import com.android.org.bouncycastle.x509.extension.X509ExtensionUtil;
 
 class CertPathValidatorUtilities
 {
@@ -775,7 +777,7 @@ class CertPathValidatorUtilities
 
                     for (int j = 0; j < genNames.length; j++)
                     {
-                        GeneralName name = genNames[j];
+                        GeneralName name = genNames[i];
                         if (name.getTagNo() == GeneralName.uniformResourceIdentifier)
                         {
                             try

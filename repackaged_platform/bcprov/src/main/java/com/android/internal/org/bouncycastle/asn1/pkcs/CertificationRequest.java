@@ -1,7 +1,6 @@
 /* GENERATED SOURCE. DO NOT MODIFY. */
 package com.android.internal.org.bouncycastle.asn1.pkcs;
 
-import com.android.internal.org.bouncycastle.asn1.ASN1BitString;
 import com.android.internal.org.bouncycastle.asn1.ASN1EncodableVector;
 import com.android.internal.org.bouncycastle.asn1.ASN1Object;
 import com.android.internal.org.bouncycastle.asn1.ASN1Primitive;
@@ -26,7 +25,7 @@ public class CertificationRequest
 {
     protected CertificationRequestInfo reqInfo = null;
     protected AlgorithmIdentifier sigAlgId = null;
-    protected ASN1BitString sigBits = null;
+    protected DERBitString sigBits = null;
 
     public static CertificationRequest getInstance(Object o)
     {
@@ -50,7 +49,7 @@ public class CertificationRequest
     public CertificationRequest(
         CertificationRequestInfo requestInfo,
         AlgorithmIdentifier     algorithm,
-        ASN1BitString            signature)
+        DERBitString            signature)
     {
         this.reqInfo = requestInfo;
         this.sigAlgId = algorithm;
@@ -78,7 +77,7 @@ public class CertificationRequest
         return sigAlgId;
     }
 
-    public ASN1BitString getSignature()
+    public DERBitString getSignature()
     {
         return sigBits;
     }

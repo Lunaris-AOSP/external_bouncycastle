@@ -56,16 +56,18 @@ public class PKCS7Padding
     public int padCount(byte[] in)
         throws InvalidCipherTextException
     {
-        byte countAsByte = in[in.length - 1];
-        int count = countAsByte & 0xFF;
-        int position = in.length - count;
+        int count = in[in.length - 1] & 0xff;
+        byte countAsbyte = (byte)count;
 
-        int failed = (position | (count - 1)) >> 31;
-        for (int i = 0; i < in.length; ++i)
+        // constant time version
+        boolean failed = (count > in.length | count == 0);
+
+        for (int i = 0; i < in.length; i++)
         {
-            failed |= (in[i] ^ countAsByte) & ~((i - position) >> 31);
+            failed |= (in.length - i <= count) & (in[i] != countAsbyte);
         }
-        if (failed != 0)
+
+        if (failed)
         {
             throw new InvalidCipherTextException("pad block corrupted");
         }

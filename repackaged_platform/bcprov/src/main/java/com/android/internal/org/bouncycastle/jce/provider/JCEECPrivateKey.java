@@ -7,21 +7,24 @@ import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.security.interfaces.ECPrivateKey;
 import java.security.spec.ECParameterSpec;
+import java.security.spec.ECPoint;
 import java.security.spec.ECPrivateKeySpec;
 import java.security.spec.EllipticCurve;
 import java.util.Enumeration;
 
-import com.android.internal.org.bouncycastle.asn1.ASN1BitString;
 import com.android.internal.org.bouncycastle.asn1.ASN1Encodable;
 import com.android.internal.org.bouncycastle.asn1.ASN1Encoding;
 import com.android.internal.org.bouncycastle.asn1.ASN1Integer;
 import com.android.internal.org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import com.android.internal.org.bouncycastle.asn1.ASN1Primitive;
+import com.android.internal.org.bouncycastle.asn1.ASN1Sequence;
+import com.android.internal.org.bouncycastle.asn1.DERBitString;
 import com.android.internal.org.bouncycastle.asn1.DERNull;
 // Android-removed: Unsupported algorithms
 // import org.bouncycastle.asn1.cryptopro.CryptoProObjectIdentifiers;
 // import org.bouncycastle.asn1.cryptopro.ECGOST3410NamedCurves;
 import com.android.internal.org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import com.android.internal.org.bouncycastle.asn1.sec.ECPrivateKeyStructure;
 import com.android.internal.org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import com.android.internal.org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import com.android.internal.org.bouncycastle.asn1.x9.X962Parameters;
@@ -50,7 +53,7 @@ public class JCEECPrivateKey
     private ECParameterSpec ecSpec;
     private boolean         withCompression;
 
-    private ASN1BitString publicKey;
+    private DERBitString publicKey;
 
     private PKCS12BagAttributeCarrierImpl attrCarrier = new PKCS12BagAttributeCarrierImpl();
 
@@ -215,7 +218,6 @@ public class JCEECPrivateKey
             else
             */
             // END Android-removed: Unsupported algorithms
-            if (ecP != null)
             {
                 EllipticCurve ellipticCurve = EC5Util.convertCurve(ecP.getCurve(), ecP.getSeed());
 
@@ -252,7 +254,7 @@ public class JCEECPrivateKey
         }
         else
         {
-            com.android.internal.org.bouncycastle.asn1.sec.ECPrivateKey ec = com.android.internal.org.bouncycastle.asn1.sec.ECPrivateKey.getInstance(privKey);
+            ECPrivateKeyStructure ec = new ECPrivateKeyStructure((ASN1Sequence)privKey);
 
             this.d = ec.getKey();
             this.publicKey = ec.getPublicKey();
@@ -312,25 +314,15 @@ public class JCEECPrivateKey
         }
         
         PrivateKeyInfo          info;
-        com.android.internal.org.bouncycastle.asn1.sec.ECPrivateKey keyStructure;
-
-        int orderBitLength;
-        if (ecSpec == null)
-        {
-            orderBitLength = ECUtil.getOrderBitLength(null, null, this.getS());
-        }
-        else
-        {
-            orderBitLength = ECUtil.getOrderBitLength(null, ecSpec.getOrder(), this.getS());
-        }
+        ECPrivateKeyStructure keyStructure;
 
         if (publicKey != null)
         {
-            keyStructure = new com.android.internal.org.bouncycastle.asn1.sec.ECPrivateKey(orderBitLength, this.getS(), publicKey, params);
+            keyStructure = new ECPrivateKeyStructure(this.getS(), publicKey, params);
         }
         else
         {
-            keyStructure = new com.android.internal.org.bouncycastle.asn1.sec.ECPrivateKey(orderBitLength, this.getS(), params);
+            keyStructure = new ECPrivateKeyStructure(this.getS(), params);
         }
 
         try
@@ -442,7 +434,7 @@ public class JCEECPrivateKey
 
     }
 
-    private ASN1BitString getPublicKeyDetails(JCEECPublicKey   pub)
+    private DERBitString getPublicKeyDetails(JCEECPublicKey   pub)
     {
         try
         {

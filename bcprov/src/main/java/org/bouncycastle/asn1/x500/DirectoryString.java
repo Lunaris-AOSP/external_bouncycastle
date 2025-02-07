@@ -1,17 +1,16 @@
 package org.bouncycastle.asn1.x500;
 
-import org.bouncycastle.asn1.ASN1BMPString;
 import org.bouncycastle.asn1.ASN1Choice;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1Primitive;
-import org.bouncycastle.asn1.ASN1PrintableString;
 import org.bouncycastle.asn1.ASN1String;
-import org.bouncycastle.asn1.ASN1T61String;
 import org.bouncycastle.asn1.ASN1TaggedObject;
-import org.bouncycastle.asn1.ASN1UTF8String;
-import org.bouncycastle.asn1.ASN1UniversalString;
+import org.bouncycastle.asn1.DERBMPString;
+import org.bouncycastle.asn1.DERPrintableString;
+import org.bouncycastle.asn1.DERT61String;
 import org.bouncycastle.asn1.DERUTF8String;
+import org.bouncycastle.asn1.DERUniversalString;
 
 /**
  * The DirectoryString CHOICE object.
@@ -29,29 +28,29 @@ public class DirectoryString
             return (DirectoryString)o;
         }
 
-        if (o instanceof ASN1T61String)
+        if (o instanceof DERT61String)
         {
-            return new DirectoryString((ASN1T61String)o);
+            return new DirectoryString((DERT61String)o);
         }
 
-        if (o instanceof ASN1PrintableString)
+        if (o instanceof DERPrintableString)
         {
-            return new DirectoryString((ASN1PrintableString)o);
+            return new DirectoryString((DERPrintableString)o);
         }
 
-        if (o instanceof ASN1UniversalString)
+        if (o instanceof DERUniversalString)
         {
-            return new DirectoryString((ASN1UniversalString)o);
+            return new DirectoryString((DERUniversalString)o);
         }
 
-        if (o instanceof ASN1UTF8String)
+        if (o instanceof DERUTF8String)
         {
-            return new DirectoryString((ASN1UTF8String)o);
+            return new DirectoryString((DERUTF8String)o);
         }
 
-        if (o instanceof ASN1BMPString)
+        if (o instanceof DERBMPString)
         {
-            return new DirectoryString((ASN1BMPString)o);
+            return new DirectoryString((DERBMPString)o);
         }
 
         throw new IllegalArgumentException("illegal object in getInstance: " + o.getClass().getName());
@@ -64,35 +63,35 @@ public class DirectoryString
             throw new IllegalArgumentException("choice item must be explicitly tagged");
         }
 
-        return getInstance(o.getExplicitBaseObject());
+        return getInstance(o.getObject());
     }
 
     private DirectoryString(
-        ASN1T61String string)
+        DERT61String string)
     {
         this.string = string;
     }
 
     private DirectoryString(
-        ASN1PrintableString string)
+        DERPrintableString string)
     {
         this.string = string;
     }
 
     private DirectoryString(
-        ASN1UniversalString string)
+        DERUniversalString string)
     {
         this.string = string;
     }
 
     private DirectoryString(
-        ASN1UTF8String string)
+        DERUTF8String string)
     {
         this.string = string;
     }
 
     private DirectoryString(
-        ASN1BMPString string)
+        DERBMPString string)
     {
         this.string = string;
     }

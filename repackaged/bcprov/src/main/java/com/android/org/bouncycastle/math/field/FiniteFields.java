@@ -3,8 +3,6 @@ package com.android.org.bouncycastle.math.field;
 
 import java.math.BigInteger;
 
-import com.android.org.bouncycastle.util.BigIntegers;
-
 /**
  * @hide This class is not part of the Android public SDK API
  */
@@ -45,7 +43,7 @@ public abstract class FiniteFields
 
         if (bitLength < 3)
         {
-            switch (BigIntegers.intValueExact(characteristic))
+            switch (characteristic.intValue())
             {
             case 2:
                 return GF_2;

@@ -61,21 +61,22 @@ public class BERSet
         super(isSorted, elements);
     }
 
-    int encodedLength(boolean withTag) throws IOException
+    int encodedLength() throws IOException
     {
-        int totalLength = withTag ? 4 : 3;
+        int count = elements.length;
+        int totalLength = 0;
 
-        for (int i = 0, count = elements.length; i < count; ++i)
+        for (int i = 0; i < count; ++i)
         {
             ASN1Primitive p = elements[i].toASN1Primitive();
-            totalLength += p.encodedLength(true);
+            totalLength += p.encodedLength();
         }
 
-        return totalLength;
+        return 2 + totalLength + 2;
     }
 
     void encode(ASN1OutputStream out, boolean withTag) throws IOException
     {
-        out.writeEncodingIL(withTag, BERTags.CONSTRUCTED | BERTags.SET, elements);
+        out.writeEncodedIndef(withTag, BERTags.SET | BERTags.CONSTRUCTED, elements);
     }
 }

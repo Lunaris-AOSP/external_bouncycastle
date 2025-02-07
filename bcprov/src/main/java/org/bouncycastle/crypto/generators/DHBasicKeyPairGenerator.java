@@ -1,18 +1,14 @@
 package org.bouncycastle.crypto.generators;
 
-import java.math.BigInteger;
-
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPairGenerator;
-import org.bouncycastle.crypto.CryptoServicePurpose;
-import org.bouncycastle.crypto.CryptoServicesRegistrar;
 import org.bouncycastle.crypto.KeyGenerationParameters;
-import org.bouncycastle.crypto.constraints.ConstraintUtils;
-import org.bouncycastle.crypto.constraints.DefaultServiceProperties;
 import org.bouncycastle.crypto.params.DHKeyGenerationParameters;
 import org.bouncycastle.crypto.params.DHParameters;
 import org.bouncycastle.crypto.params.DHPrivateKeyParameters;
 import org.bouncycastle.crypto.params.DHPublicKeyParameters;
+
+import java.math.BigInteger;
 
 /**
  * a basic Diffie-Hellman key pair generator.
@@ -29,8 +25,6 @@ public class DHBasicKeyPairGenerator
         KeyGenerationParameters param)
     {
         this.param = (DHKeyGenerationParameters)param;
-
-        CryptoServicesRegistrar.checkConstraints(new DefaultServiceProperties("DHBasicKeyGen", ConstraintUtils.bitsOfSecurityFor(this.param.getParameters().getP()), this.param.getParameters(), CryptoServicePurpose.KEYGEN));
     }
 
     public AsymmetricCipherKeyPair generateKeyPair()

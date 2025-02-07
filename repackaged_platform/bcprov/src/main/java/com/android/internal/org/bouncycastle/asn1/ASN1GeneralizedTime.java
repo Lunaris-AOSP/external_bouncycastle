@@ -48,13 +48,7 @@ import com.android.internal.org.bouncycastle.util.Strings;
 public class ASN1GeneralizedTime
     extends ASN1Primitive
 {
-    static final ASN1UniversalType TYPE = new ASN1UniversalType(ASN1GeneralizedTime.class, BERTags.GENERALIZED_TIME)
-    {
-        ASN1Primitive fromImplicitPrimitive(DEROctetString octetString)
-        {
-            return createPrimitive(octetString.getOctets());
-        }
-    };
+    protected byte[] time;
 
     /**
      * return a generalized time from the passed in object
@@ -70,19 +64,12 @@ public class ASN1GeneralizedTime
         {
             return (ASN1GeneralizedTime)obj;
         }
-        if (obj instanceof ASN1Encodable)
-        {
-            ASN1Primitive primitive = ((ASN1Encodable)obj).toASN1Primitive();
-            if (primitive instanceof ASN1GeneralizedTime)
-            {
-                return (ASN1GeneralizedTime)primitive;
-            }
-        }
+
         if (obj instanceof byte[])
         {
             try
             {
-                return (ASN1GeneralizedTime)TYPE.fromByteArray((byte[])obj);
+                return (ASN1GeneralizedTime)fromByteArray((byte[])obj);
             }
             catch (Exception e)
             {
@@ -96,18 +83,28 @@ public class ASN1GeneralizedTime
     /**
      * return a Generalized Time object from a tagged object.
      *
-     * @param taggedObject the tagged object holding the object we want
-     * @param explicit     true if the object is meant to be explicitly tagged false
-     *                     otherwise.
+     * @param obj      the tagged object holding the object we want
+     * @param explicit true if the object is meant to be explicitly
+     *                 tagged false otherwise.
      * @return an ASN1GeneralizedTime instance.
-     * @throws IllegalArgumentException if the tagged object cannot be converted.
+     * @throws IllegalArgumentException if the tagged object cannot
+     * be converted.
      */
-    public static ASN1GeneralizedTime getInstance(ASN1TaggedObject taggedObject, boolean explicit)
+    public static ASN1GeneralizedTime getInstance(
+        ASN1TaggedObject obj,
+        boolean explicit)
     {
-        return (ASN1GeneralizedTime)TYPE.getContextInstance(taggedObject, explicit);
-    }
+        ASN1Primitive o = obj.getObject();
 
-    final byte[] contents;
+        if (explicit || o instanceof ASN1GeneralizedTime)
+        {
+            return getInstance(o);
+        }
+        else
+        {
+            return new ASN1GeneralizedTime(ASN1OctetString.getInstance(o).getOctets());
+        }
+    }
 
     /**
      * The correct format for this is YYYYMMDDHHMMSS[.f]Z, or without the Z
@@ -121,7 +118,7 @@ public class ASN1GeneralizedTime
     public ASN1GeneralizedTime(
         String time)
     {
-        this.contents = Strings.toByteArray(time);
+        this.time = Strings.toByteArray(time);
         try
         {
             this.getDate();
@@ -146,7 +143,7 @@ public class ASN1GeneralizedTime
 
         dateF.setTimeZone(new SimpleTimeZone(0, "Z"));
 
-        this.contents = Strings.toByteArray(dateF.format(time));
+        this.time = Strings.toByteArray(dateF.format(time));
     }
 
     /**
@@ -168,7 +165,7 @@ public class ASN1GeneralizedTime
 
         dateF.setTimeZone(new SimpleTimeZone(0, "Z"));
 
-        this.contents = Strings.toByteArray(dateF.format(time));
+        this.time = Strings.toByteArray(dateF.format(time));
     }
 
     ASN1GeneralizedTime(
@@ -178,7 +175,7 @@ public class ASN1GeneralizedTime
         {
             throw new IllegalArgumentException("GeneralizedTime string too short");
         }
-        this.contents = bytes;
+        this.time = bytes;
 
         if (!(isDigit(0) && isDigit(1) && isDigit(2) && isDigit(3)))
         {
@@ -193,7 +190,7 @@ public class ASN1GeneralizedTime
      */
     public String getTimeString()
     {
-        return Strings.fromByteArray(contents);
+        return Strings.fromByteArray(time);
     }
 
     /**
@@ -211,7 +208,7 @@ public class ASN1GeneralizedTime
      */
     public String getTime()
     {
-        String stime = Strings.fromByteArray(contents);
+        String stime = Strings.fromByteArray(time);
 
         //
         // standardise the format.
@@ -363,26 +360,34 @@ public class ASN1GeneralizedTime
         throws ParseException
     {
         SimpleDateFormat dateF;
-        String stime = Strings.fromByteArray(contents);
+        String stime = Strings.fromByteArray(time);
         String d = stime;
 
         if (stime.endsWith("Z"))
         {
             if (hasFractionalSeconds())
             {
-                dateF = new SimpleDateFormat("yyyyMMddHHmmss.SSS'Z'", LocaleUtil.EN_Locale);
+                // Android-changed: Use localized version
+                // dateF = new SimpleDateFormat("yyyyMMddHHmmss.SSS'Z'");
+                dateF = new SimpleDateFormat("yyyyMMddHHmmss.SSS'Z'", Locale.US);
             }
             else if (hasSeconds())
             {
-                dateF = new SimpleDateFormat("yyyyMMddHHmmss'Z'", LocaleUtil.EN_Locale);
+                // Android-changed: Use localized version
+                // dateF = new SimpleDateFormat("yyyyMMddHHmmss'Z'");
+                dateF = new SimpleDateFormat("yyyyMMddHHmmss'Z'", Locale.US);
             }
             else if (hasMinutes())
             {
-                dateF = new SimpleDateFormat("yyyyMMddHHmm'Z'", LocaleUtil.EN_Locale);
+                // Android-changed: Use localized version
+                // dateF = new SimpleDateFormat("yyyyMMddHHmm'Z'");
+                dateF = new SimpleDateFormat("yyyyMMddHHmm'Z'", Locale.US);
             }
             else
             {
-                dateF = new SimpleDateFormat("yyyyMMddHH'Z'", LocaleUtil.EN_Locale);
+                // Android-changed: Use localized version
+                // dateF = new SimpleDateFormat("yyyyMMddHH'Z'");
+                dateF = new SimpleDateFormat("yyyyMMddHH'Z'", Locale.US);
             }
 
             dateF.setTimeZone(new SimpleTimeZone(0, "Z"));
@@ -427,14 +432,14 @@ public class ASN1GeneralizedTime
             d = pruneFractionalSeconds(d);
         }
         
-        return dateF.parse(d);
+        return DateUtil.epochAdjust(dateF.parse(d));
     }
 
     protected boolean hasFractionalSeconds()
     {
-        for (int i = 0; i != contents.length; i++)
+        for (int i = 0; i != time.length; i++)
         {
-            if (contents[i] == '.')
+            if (time[i] == '.')
             {
                 if (i == 14)
                 {
@@ -457,46 +462,49 @@ public class ASN1GeneralizedTime
 
     private boolean isDigit(int pos)
     {
-        return contents.length > pos && contents[pos] >= '0' && contents[pos] <= '9';
+        return time.length > pos && time[pos] >= '0' && time[pos] <= '9';
     }
 
-    final boolean encodeConstructed()
+    boolean isConstructed()
     {
         return false;
     }
 
-    int encodedLength(boolean withTag)
+    int encodedLength()
     {
-        return ASN1OutputStream.getLengthOfEncodingDL(withTag, contents.length);
+        int length = time.length;
+
+        return 1 + StreamUtil.calculateBodyLength(length) + length;
     }
 
     void encode(ASN1OutputStream out, boolean withTag) throws IOException
     {
-        out.writeEncodingDL(withTag, BERTags.GENERALIZED_TIME, contents);
+        out.writeEncoded(withTag, BERTags.GENERALIZED_TIME, time);
     }
 
     ASN1Primitive toDERObject()
     {
-        return new DERGeneralizedTime(contents);
+        return new DERGeneralizedTime(time);
     }
 
-    boolean asn1Equals(ASN1Primitive o)
+    ASN1Primitive toDLObject()
+    {
+        return new DERGeneralizedTime(time);
+    }
+
+    boolean asn1Equals(
+        ASN1Primitive o)
     {
         if (!(o instanceof ASN1GeneralizedTime))
         {
             return false;
         }
 
-        return Arrays.areEqual(contents, ((ASN1GeneralizedTime)o).contents);
+        return Arrays.areEqual(time, ((ASN1GeneralizedTime)o).time);
     }
 
     public int hashCode()
     {
-        return Arrays.hashCode(contents);
-    }
-
-    static ASN1GeneralizedTime createPrimitive(byte[] contents)
-    {
-        return new ASN1GeneralizedTime(contents);
+        return Arrays.hashCode(time);
     }
 }

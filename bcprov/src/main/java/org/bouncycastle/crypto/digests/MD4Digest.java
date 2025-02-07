@@ -1,4 +1,3 @@
-// BEGIN Android-changed: maintain old behaviour
 package org.bouncycastle.crypto.digests;
 
 
@@ -290,4 +289,3 @@ public class MD4Digest
         copyIn(d);
     }
 }
-// END Android-changed: maintain old behaviour

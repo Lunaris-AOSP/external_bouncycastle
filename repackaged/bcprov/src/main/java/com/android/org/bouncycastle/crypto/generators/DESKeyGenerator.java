@@ -2,10 +2,7 @@
 package com.android.org.bouncycastle.crypto.generators;
 
 import com.android.org.bouncycastle.crypto.CipherKeyGenerator;
-import com.android.org.bouncycastle.crypto.CryptoServicePurpose;
-import com.android.org.bouncycastle.crypto.CryptoServicesRegistrar;
 import com.android.org.bouncycastle.crypto.KeyGenerationParameters;
-import com.android.org.bouncycastle.crypto.constraints.DefaultServiceProperties;
 import com.android.org.bouncycastle.crypto.params.DESParameters;
 
 /**
@@ -36,8 +33,6 @@ public class DESKeyGenerator
                     + (DESParameters.DES_KEY_LENGTH * 8)
                     + " bits long.");
         }
-
-        CryptoServicesRegistrar.checkConstraints(new DefaultServiceProperties("DESKeyGen", 56, null, CryptoServicePurpose.KEYGEN));
     }
 
     public byte[] generateKey()

@@ -1,12 +1,6 @@
-// BEGIN Android-changed: adapt to old version of GeneralDigest
 package org.bouncycastle.crypto.digests;
 
 
-import org.bouncycastle.crypto.CryptoServiceProperties;
-import org.bouncycastle.crypto.CryptoServicePurpose;
-import org.bouncycastle.crypto.CryptoServicesRegistrar;
-import org.bouncycastle.crypto.Digest;
-import org.bouncycastle.crypto.SavableDigest;
 import org.bouncycastle.util.Memoable;
 import org.bouncycastle.util.Pack;
 
@@ -24,60 +18,20 @@ import org.bouncycastle.util.Pack;
  */
 public class SHA256Digest
     extends GeneralDigest
-    implements SavableDigest
+    implements EncodableDigest
 {
     private static final int    DIGEST_LENGTH = 32;
-    protected final CryptoServicePurpose purpose;
 
     private int     H1, H2, H3, H4, H5, H6, H7, H8;
 
     private int[]   X = new int[64];
     private int     xOff;
 
-    public static SavableDigest newInstance()
-    {
-        return new SHA256Digest();
-    }
-
-    public static SavableDigest newInstance(CryptoServicePurpose purpose)
-    {
-        return new SHA256Digest(purpose);
-    }
-
-    public static SavableDigest newInstance(Digest digest)
-    {
-        if (digest instanceof SHA256Digest)
-        {
-            return new SHA256Digest((SHA256Digest) digest);
-        }
-
-        throw new IllegalArgumentException("receiver digest not available for input type " + (digest != null ? digest.getClass().getName() : "null"));
-    }
-
-    public static SavableDigest newInstance(byte[] encoded)
-    {
-        return new SHA256Digest(encoded);
-    }
-
     /**
      * Standard constructor
      */
     public SHA256Digest()
     {
-        this(CryptoServicePurpose.ANY);
-    }
-
-    /**
-     * Standard constructor, with purpose
-     */
-    public SHA256Digest(CryptoServicePurpose purpose)
-    {
-        super();
-
-        this.purpose = purpose;
-
-        CryptoServicesRegistrar.checkConstraints(cryptoServiceProperties());
-
         reset();
     }
 
@@ -88,8 +42,6 @@ public class SHA256Digest
     public SHA256Digest(SHA256Digest t)
     {
         super(t);
-
-        this.purpose = CryptoServicePurpose.ANY;
 
         copyIn(t);
     }
@@ -119,8 +71,6 @@ public class SHA256Digest
     public SHA256Digest(byte[] encodedState)
     {
         super(encodedState);
-
-        this.purpose = CryptoServicePurpose.ANY;
 
         H1 = Pack.bigEndianToInt(encodedState, 16);
         H2 = Pack.bigEndianToInt(encodedState, 20);
@@ -153,7 +103,13 @@ public class SHA256Digest
         byte[]  in,
         int     inOff)
     {
-        X[xOff] = Pack.bigEndianToInt(in, inOff);
+        // Note: Inlined for performance
+//        X[xOff] = Pack.bigEndianToInt(in, inOff);
+        int n = in[inOff] << 24;
+        n |= (in[++inOff] & 0xff) << 16;
+        n |= (in[++inOff] & 0xff) << 8;
+        n |= (in[++inOff] & 0xff);
+        X[xOff] = n;
 
         if (++xOff == 16)
         {
@@ -173,7 +129,9 @@ public class SHA256Digest
         X[15] = (int)(bitLength & 0xffffffff);
     }
 
-    public int doFinal(byte[] out, int outOff)
+    public int doFinal(
+        byte[]  out,
+        int     outOff)
     {
         finish();
 
@@ -241,7 +199,7 @@ public class SHA256Digest
         int     g = H7;
         int     h = H8;
 
-        int t = 0;
+        int t = 0;     
         for(int i = 0; i < 8; i ++)
         {
             // t = 8 * i
@@ -374,7 +332,7 @@ public class SHA256Digest
 
     public byte[] getEncodedState()
     {
-        byte[] state = new byte[52 + xOff * 4 + 1];
+        byte[] state = new byte[52 + xOff * 4];
 
         super.populateState(state);
 
@@ -393,14 +351,7 @@ public class SHA256Digest
             Pack.intToBigEndian(X[i], state, 52 + (i * 4));
         }
 
-        state[state.length - 1] = (byte)purpose.ordinal();
-
         return state;
     }
-
-    protected CryptoServiceProperties cryptoServiceProperties()
-    {
-        return Utils.getDefaultProperties(this, 256, purpose);
-    }
 }
-// END Android-changed: adapt to old version of GeneralDigest
+

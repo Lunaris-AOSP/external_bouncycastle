@@ -1,5 +1,4 @@
 /* GENERATED SOURCE. DO NOT MODIFY. */
-// BEGIN Android-changed: maintain old behaviour
 package com.android.org.bouncycastle.crypto.digests;
 
 
@@ -361,4 +360,4 @@ public class SHA224Digest
         return state;
     }
 }
-// END Android-changed: maintain old behaviour
+
