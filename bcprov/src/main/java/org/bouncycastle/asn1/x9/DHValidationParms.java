@@ -1,12 +1,12 @@
 package org.bouncycastle.asn1.x9;
 
+import org.bouncycastle.asn1.ASN1BitString;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1TaggedObject;
-import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DERSequence;
 
 /**
@@ -14,7 +14,7 @@ import org.bouncycastle.asn1.DERSequence;
  */
 public class DHValidationParms extends ASN1Object
 {
-    private DERBitString seed;
+    private ASN1BitString seed;
     private ASN1Integer pgenCounter;
 
     public static DHValidationParms getInstance(ASN1TaggedObject obj, boolean explicit)
@@ -36,7 +36,7 @@ public class DHValidationParms extends ASN1Object
         return null;
     }
 
-    public DHValidationParms(DERBitString seed, ASN1Integer pgenCounter)
+    public DHValidationParms(ASN1BitString seed, ASN1Integer pgenCounter)
     {
         if (seed == null)
         {
@@ -58,11 +58,11 @@ public class DHValidationParms extends ASN1Object
             throw new IllegalArgumentException("Bad sequence size: " + seq.size());
         }
 
-        this.seed = DERBitString.getInstance(seq.getObjectAt(0));
+        this.seed = ASN1BitString.getInstance(seq.getObjectAt(0));
         this.pgenCounter = ASN1Integer.getInstance(seq.getObjectAt(1));
     }
 
-    public DERBitString getSeed()
+    public ASN1BitString getSeed()
     {
         return this.seed;
     }

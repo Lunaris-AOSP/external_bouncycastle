@@ -4,6 +4,8 @@ import java.io.IOException;
 
 /**
  * Parser for indefinite-length SEQUENCEs.
+ * 
+ * @deprecated Check for 'ASN1SequenceParser' instead 
  */
 public class BERSequenceParser
     implements ASN1SequenceParser
@@ -36,7 +38,7 @@ public class BERSequenceParser
     public ASN1Primitive getLoadedObject()
         throws IOException
     {
-        return new BERSequence(_parser.readVector());
+        return parse(_parser);
     }
 
     /**
@@ -54,5 +56,10 @@ public class BERSequenceParser
         {
             throw new IllegalStateException(e.getMessage());
         }
+    }
+
+    static BERSequence parse(ASN1StreamParser sp) throws IOException
+    {
+        return new BERSequence(sp.readVector());
     }
 }

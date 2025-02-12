@@ -3,7 +3,7 @@ package org.bouncycastle.crypto.modes;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.DataLengthException;
-import org.bouncycastle.crypto.SkippingStreamCipher;
+import org.bouncycastle.crypto.OutputLengthException;
 import org.bouncycastle.crypto.StreamBlockCipher;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 import org.bouncycastle.util.Arrays;
@@ -15,7 +15,7 @@ import org.bouncycastle.util.Pack;
  */
 public class SICBlockCipher
     extends StreamBlockCipher
-    implements SkippingStreamCipher
+    implements CTRModeCipher
 {
     private final BlockCipher     cipher;
     private final int             blockSize;
@@ -26,9 +26,20 @@ public class SICBlockCipher
     private int             byteCount;
 
     /**
+     * Return a new SIC/CTR mode cipher based on the passed in base cipher
+     *
+     * @param cipher the base cipher for the SIC/CTR mode.
+     */
+    public static CTRModeCipher newInstance(BlockCipher cipher)
+    {
+        return new SICBlockCipher(cipher);
+    }
+
+    /**
      * Basic constructor.
      *
      * @param c the block cipher to be used.
+     * @deprecated use newInstance() method.
      */
     public SICBlockCipher(BlockCipher c)
     {
@@ -91,9 +102,66 @@ public class SICBlockCipher
     public int processBlock(byte[] in, int inOff, byte[] out, int outOff)
           throws DataLengthException, IllegalStateException
     {
-        processBytes(in, inOff, blockSize, out, outOff);
+        if (byteCount != 0)
+        {
+            processBytes(in, inOff, blockSize, out, outOff);
+            return blockSize;
+        }
 
+        if (inOff + blockSize > in.length)
+        {
+            throw new DataLengthException("input buffer too small");
+        }
+        if (outOff + blockSize > out.length)
+        {
+            throw new OutputLengthException("output buffer too short");
+        }
+
+        cipher.processBlock(counter, 0, counterOut, 0);
+        for (int i = 0; i < blockSize; ++i)
+        {
+            out[outOff + i] = (byte)(in[inOff + i] ^ counterOut[i]);
+        }
+        incrementCounter();
         return blockSize;
+    }
+
+    public int processBytes(byte[] in, int inOff, int len, byte[] out, int outOff)
+        throws DataLengthException
+    {
+        if (inOff + len > in.length)
+        {
+            throw new DataLengthException("input buffer too small");
+        }
+        if (outOff + len > out.length)
+        {
+            throw new OutputLengthException("output buffer too short");
+        }
+
+        for (int i = 0; i < len; ++i)
+        {
+            byte next;
+
+            if (byteCount == 0)
+            {
+                checkLastIncrement();
+
+                cipher.processBlock(counter, 0, counterOut, 0);
+                next = (byte)(in[inOff + i] ^ counterOut[byteCount++]);
+            }
+            else
+            {
+                next = (byte)(in[inOff + i] ^ counterOut[byteCount++]);
+                if (byteCount == counter.length)
+                {
+                    byteCount = 0;
+                    incrementCounter();
+                }
+            }
+            out[outOff + i] = next;
+        }
+
+        return len;
     }
 
     protected byte calculateByte(byte in)
@@ -101,6 +169,8 @@ public class SICBlockCipher
     {
         if (byteCount == 0)
         {
+            checkLastIncrement();
+
             cipher.processBlock(counter, 0, counterOut, 0);
 
             return (byte)(counterOut[byteCount++] ^ in);
@@ -111,10 +181,7 @@ public class SICBlockCipher
         if (byteCount == counter.length)
         {
             byteCount = 0;
-
-            incrementCounterAt(0);
-
-            checkCounter();
+            incrementCounter();
         }
 
         return rv;
@@ -125,12 +192,36 @@ public class SICBlockCipher
         // if the IV is the same as the blocksize we assume the user knows what they are doing
         if (IV.length < blockSize)
         {
-            for (int i = 0; i != IV.length; i++)
+            for (int i = IV.length - 1; i >= 0; i--)
             {
                 if (counter[i] != IV[i])
                 {
                     throw new IllegalStateException("Counter in CTR/SIC mode out of range.");
                 }
+            }
+        }
+    }
+
+    private void checkLastIncrement()
+    {
+        // if the IV is the same as the blocksize we assume the user knows what they are doing
+        if (IV.length < blockSize)
+        {
+            if (counter[IV.length - 1] != IV[IV.length - 1])
+            {
+                throw new IllegalStateException("Counter in CTR/SIC mode out of range.");
+            }
+        }
+    }
+
+    private void incrementCounter()
+    {
+        int i = counter.length;
+        while (--i >= 0)
+        {
+            if (++counter[i] != 0)
+            {
+                break;
             }
         }
     }

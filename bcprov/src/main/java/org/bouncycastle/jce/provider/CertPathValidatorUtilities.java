@@ -44,7 +44,6 @@ import javax.security.auth.x500.X500Principal;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Enumerated;
 import org.bouncycastle.asn1.ASN1GeneralizedTime;
-import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1OctetString;
@@ -54,7 +53,6 @@ import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1String;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSequence;
-import org.bouncycastle.asn1.isismtt.ISISMTTObjectIdentifiers;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.RFC4519Style;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
@@ -68,6 +66,7 @@ import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.PolicyInformation;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.internal.asn1.isismtt.ISISMTTObjectIdentifiers;
 import org.bouncycastle.jcajce.PKIXCRLStore;
 import org.bouncycastle.jcajce.PKIXCRLStoreSelector;
 import org.bouncycastle.jcajce.PKIXCertRevocationCheckerParameters;
@@ -83,7 +82,6 @@ import org.bouncycastle.util.Selector;
 import org.bouncycastle.util.Store;
 import org.bouncycastle.util.StoreException;
 import org.bouncycastle.x509.X509AttributeCertificate;
-import org.bouncycastle.x509.extension.X509ExtensionUtil;
 
 class CertPathValidatorUtilities
 {
@@ -776,7 +774,7 @@ class CertPathValidatorUtilities
 
                     for (int j = 0; j < genNames.length; j++)
                     {
-                        GeneralName name = genNames[i];
+                        GeneralName name = genNames[j];
                         if (name.getTagNo() == GeneralName.uniformResourceIdentifier)
                         {
                             try

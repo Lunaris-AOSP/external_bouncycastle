@@ -12,8 +12,9 @@ import org.bouncycastle.crypto.digests.AndroidDigestFactory;
 /**
  * Generator for PBE derived keys and ivs as usd by OpenSSL.
  * <p>
- * The scheme is a simple extension of PKCS 5 V2.0 Scheme 1 using MD5 with an
- * iteration count of 1.
+ * Originally this scheme was a simple extension of PKCS 5 V2.0 Scheme 1 using MD5 with an
+ * iteration count of 1. The default digest was changed to SHA-256 with OpenSSL 1.1.0. This
+ * implementation still defaults to MD5, but the digest can now be set.
  * <p>
  */
 public class OpenSSLPBEParametersGenerator
@@ -24,7 +25,7 @@ public class OpenSSLPBEParametersGenerator
     private Digest  digest = AndroidDigestFactory.getMD5();
 
     /**
-     * Construct a OpenSSL Parameters generator. 
+     * Construct a OpenSSL Parameters generator.
      */
     public OpenSSLPBEParametersGenerator()
     {
