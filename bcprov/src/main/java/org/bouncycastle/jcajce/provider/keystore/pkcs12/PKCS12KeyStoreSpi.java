@@ -781,7 +781,7 @@ public class PKCS12KeyStoreSpi
         return cipher;
     }
 
-
+  
     // BEGIN Android-removed: Unsupported algorithms
     /*
     public void engineLoad(KeyStore.LoadStoreParameter loadStoreParameter)
@@ -1339,7 +1339,55 @@ public class PKCS12KeyStoreSpi
         // See CtsKeystoreTestCases:android.keystore.cts.KeyStoreTest
         if (password == null)
         {
-            throw new NullPointerException("No password supplied for PKCS#12 KeyStore.");
+            if (password == null)
+            {
+                Enumeration cs = certs.keys();
+
+                ASN1EncodableVector certSeq = new ASN1EncodableVector();
+
+                while (cs.hasMoreElements())
+                {
+                    try
+                    {
+                        String certId = (String)cs.nextElement();
+                        Certificate cert = (Certificate)certs.get(certId);
+
+                        SafeBag sBag = createSafeBag(certId, cert);
+
+                        certSeq.add(sBag);
+                    }
+                    catch (CertificateEncodingException e)
+                    {
+                        throw new IOException("Error encoding certificate: " + e.toString());
+                    }
+                }
+
+                if (useDEREncoding)
+                {
+                    ContentInfo bagInfo = new ContentInfo(PKCSObjectIdentifiers.data, new DEROctetString(new DERSequence(certSeq).getEncoded()));
+
+                    Pfx pfx = new Pfx(new ContentInfo(PKCSObjectIdentifiers.data, new DEROctetString(new DERSequence(bagInfo).getEncoded())), null);
+
+                    pfx.encodeTo(stream, ASN1Encoding.DER);
+                }
+                else
+                {
+                    ContentInfo bagInfo = new ContentInfo(PKCSObjectIdentifiers.data, new BEROctetString(new BERSequence(certSeq).getEncoded()));
+
+                    Pfx pfx = new Pfx(new ContentInfo(PKCSObjectIdentifiers.data, new BEROctetString(new BERSequence(bagInfo).getEncoded())), null);
+
+                    pfx.encodeTo(stream, ASN1Encoding.BER);
+                }
+
+                return;
+            }
+        }
+        else
+        {
+            if (password == null)
+            {
+                throw new NullPointerException("no password supplied for PKCS#12 KeyStore");
+            }
         }
         /*
         if (keys.size() == 0)

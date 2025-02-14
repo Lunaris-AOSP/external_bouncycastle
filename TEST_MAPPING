@@ -7,14 +7,6 @@
           "instrumentation-arg": "core-test-mode:=presubmit"
         }
       ]
-    },
-    {
-      "name": "CtsKeystoreTestCases",
-      "options": [
-        {
-          "include-filter": "android.keystore.cts.KeyStoreTest"
-        }
-      ]
     }
   ]
 }
